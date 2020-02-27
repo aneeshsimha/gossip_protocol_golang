@@ -1,0 +1,21 @@
+2-27 meeting notes:
+demo:
+- 10 nodes, mess with throughput to show scaling
+- central server that displays the most recent message on each node
+    - display on webapp or terminal output
+things we need to have:
+- message-passing
+    - maintain a store, pass messages every once in a while, etc.
+- maintain a network of nodes
+    - each node has a list of addresses
+-
+on join:
+- if everything has full list, ez
+- figure out what nodes the new neighbors are:
+    - http://disi.unitn.it/~montreso/ds/papers/montresor17.pdf this is a cool algorithm
+    - page 9, section 4.2
+    - this handles fault tolerance on its own
+so the things we pass are:
+- messages
+- lists of nodes we're talking to (this updates the neighbor list)
+- timestamp synchronization
