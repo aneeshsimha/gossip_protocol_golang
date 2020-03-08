@@ -8,6 +8,8 @@ import (
 type nodeDescriptor struct {
 	address   *net.IP
 	timestamp uint64
+	id        uint64
+	addr      net.Addr
 }
 
 func (nd *nodeDescriptor) time() uint64 {
@@ -23,6 +25,8 @@ func (nd *nodeDescriptor) hash() uint64 {
 type messageDescriptor struct {
 	content   []byte
 	timestamp uint64
+	id        uint64
+	addr      net.Addr
 }
 
 func (md *messageDescriptor) time() uint64 {
