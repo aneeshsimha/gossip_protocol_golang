@@ -1,0 +1,5 @@
+2-29 agenda
+
+finish proposal v2
+skeleton client code
+psuedocode for algorithm
