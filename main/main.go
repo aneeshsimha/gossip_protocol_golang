@@ -7,6 +7,7 @@ import (
 
 func main() {
 	gc := &gossip.Client{}
+	gc.Run()
 
 	log.Fatal(gc.Run())
 }
