@@ -2,6 +2,7 @@ package gossip
 
 import (
 	"hash/fnv"
+	"math/rand"
 	"net"
 	"time"
 )
@@ -133,6 +134,7 @@ func insertNode(nodes []nodeDescriptor, descriptor nodeDescriptor) bool {
 				return true
 			}
 			return false
+
 		}
 
 		// else, check if the current node is older than the current old node
@@ -180,3 +182,20 @@ func insertMessage(nodes []messageDescriptor, descriptor messageDescriptor) bool
 	nodes[oldest] = descriptor
 	return true
 }
+
+// utility functions to select random node
+func selectNeighbor(nodes1 []node) node {
+	iter := rand.Intn(len(nodes1))
+	return nodes1[iter]
+}
+
+// utility functions to make a seperate list of descriptors to send to another node
+func prepareRequest(nodes1 []node, me node) node[] {
+	newList := make([]node,len(node)+1)
+	for i,e := range nodes1{
+		insert(newList, e)
+	}
+	insert(newList,me)
+	return newList
+}
+
