@@ -89,7 +89,14 @@ func (gc *Client) sendMessages() {
 }
 
 func (gc *Client) recvMessages() {
-	// TODO: see recvAlives
+	listener, _ := net.Listen("tcp", gc.messagePort)
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			log.Println(err)
+		}
+		go gc.handleMessage(conn)
+	}
 }
 
 func (gc *Client) handleMessage(conn net.Conn) {
@@ -157,7 +164,7 @@ func (gc *Client) handleAlive(conn net.Conn) {
 
 	for _, desc := range kap.KnownNodes {
 		if desc.ID == gc.id {
-			return // don't bother adding own originating messages
+			continue // don't bother adding own originating messages
 		}
 		gc.aliveChan <- desc
 	}
