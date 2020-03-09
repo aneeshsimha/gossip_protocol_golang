@@ -14,21 +14,23 @@ Basically just
 7. Add a new security group that has a bunch of ports exposed to actually run on
 8. Run `gossip_setup.sh` 
 
-Meeting notes 2-29:
+Meeting notes 2-29 [updated 3-09]:
 ---
 
 ### TODOs:
 **Assigned:**
-- Aneesh: Joining process
+~~- Aneesh: Joining process~~
 - Erik: TCP connection stuff / goroutines
 - Ryan: Finish algorithm design / functions
 
 **All items:**
 - TCP connection stuff / goroutines
-- Joining process
+~~- Joining process~~
 - Finish algorithm design / functions
 - Testing environments (unit tests?)
-- Deployment
+~~- Deployment~~
 - Demo / visualization
+- Presentation
+- Final report
 
 ---
