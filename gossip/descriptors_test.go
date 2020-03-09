@@ -19,10 +19,10 @@ var contents = [...]string{
 	"why does eve care so much about alice and bob",
 }
 
-func PrepNodes(now time.Time) []node {
-	nodes := make([]node, len(contents))
+func PrepNodes(now time.Time) []messageDescriptor {
+	nodes := make([]messageDescriptor, len(contents))
 	for i, _ := range nodes {
-		nodes[i] = &messageDescriptor{
+		nodes[i] = messageDescriptor{
 			Descriptor: Descriptor{
 				Timestamp: now.Add(10 * time.Duration(i) * time.Second),
 				ID:        rand.Uint64() % 5, // these don't matter so they can be truly random
@@ -34,7 +34,7 @@ func PrepNodes(now time.Time) []node {
 	return nodes
 }
 
-func printNodes(t *testing.T, nodes []node) {
+func printNodes(t *testing.T, nodes []messageDescriptor) {
 	for _, e := range nodes {
 		t.Log(e)
 	}
@@ -56,8 +56,8 @@ func TestNodeMerge(t *testing.T) {
 	printNodes(t, nodes)
 
 	count := len(contents)
-	moreNodes := []node{
-		&messageDescriptor{
+	moreNodes := []messageDescriptor{
+		messageDescriptor{
 			Descriptor: Descriptor{
 				Timestamp: now.Add(-10 * time.Second),
 				ID:        rand.Uint64() % 5,
@@ -65,7 +65,7 @@ func TestNodeMerge(t *testing.T) {
 			},
 			Content: "this shouldn't appear",
 		},
-		&messageDescriptor{
+		messageDescriptor{
 			Descriptor: Descriptor{
 				Timestamp: now.Add(1000 * time.Second),
 				ID:        rand.Uint64() % 5,
@@ -78,13 +78,13 @@ func TestNodeMerge(t *testing.T) {
 
 	//merge(nodes, moreNodes, len(nodes))
 
-	if insert(nodes[:], moreNodes[0], len(nodes)) {
+	if insertMessage(nodes[:], moreNodes[0]) {
 		t.Log("replaced something")
 	} else {
 		t.Log("NO REPLACE:", moreNodes[0], "was too old")
 	}
 
-	if insert(nodes[:], moreNodes[1], len(nodes)) {
+	if insertMessage(nodes[:], moreNodes[1]) {
 		t.Log("replaced something")
 	} else {
 		t.Log("NO REPLACE:", moreNodes[1], "was too old")
