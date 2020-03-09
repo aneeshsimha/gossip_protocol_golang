@@ -5,7 +5,6 @@ import (
 	"log"
 	"math/rand"
 	"net"
-	"os"
 	"time"
 
 	"coen317/gossip/counter"
