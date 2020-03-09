@@ -77,10 +77,11 @@ func (gc *Client) sendMessages() {
 	for {
 		select {
 		case <-messageTicker.C: // do every interval
-			// choose a random known node descriptor
-			// choose a random stored message
-			// turn the messageDescriptor into a stringPacket
-			// send the stringPacket
+			// TODO
+			//  choose a random known node descriptor
+			//  choose a random stored message
+			//  turn the messageDescriptor into a stringPacket
+			//  send the stringPacket
 		case <-gc.shutdown:
 			return
 		}
@@ -88,7 +89,7 @@ func (gc *Client) sendMessages() {
 }
 
 func (gc *Client) recvMessages() {
-	// TODO
+	// TODO: see recvAlives
 }
 
 func (gc *Client) handleMessage(conn net.Conn) {
@@ -108,7 +109,7 @@ func (gc *Client) handleMessage(conn net.Conn) {
 // goroutine
 func (gc *Client) messageLoop() {
 	for {
-		desc := <- gc.messageChan
+		desc := <-gc.messageChan
 		insertMessage(gc.messages[:], desc)
 	}
 }
@@ -165,41 +166,41 @@ func (gc *Client) handleAlive(conn net.Conn) {
 // goroutine
 func (gc *Client) aliveLoop() {
 	for {
-		desc := <- gc.aliveChan
+		desc := <-gc.aliveChan
 		insertNode(gc.nodes[:], desc)
 	}
 }
 
-func (gc *Client) mergeNode(descriptor *nodeDescriptor) {
-	// utility method
-	// TODO
-	insert(gc.nodes[:], descriptor, gc.maxNodes)
-}
-
-func (gc *Client) mergeMessage(message messageDescriptor) {
-	// utility method
-	// TODO
-}
-
-func (gc *Client) process() {
-	// process messages that have been sent down the various channels
-	for {
-		select {
-		case <-gc.shutdown:
-			return
-		case node := <-gc.aliveChan:
-			// merge the node in
-
-			gc.mergeNode(node) // TODO
-		case message := <-gc.messageChan:
-			// merge the message in
-
-			gc.mergeMessage(message) // TODO
-		default:
-			// do nothing lol
-		}
-	}
-}
+// replaced by various things
+//func (gc *Client) mergeNode(descriptor nodeDescriptor) {
+//	// utility method
+//	// TODO
+//	insertNode(gc.nodes[:], descriptor)
+//}
+//
+//func (gc *Client) mergeMessage(message messageDescriptor) {
+//	// utility method
+//	// TODO
+//	insertMessage(gc.messages[:], message)
+//}
+//
+//func (gc *Client) process() {
+//	// process messages that have been sent down the various channels
+//	for {
+//		select {
+//		case <-gc.shutdown:
+//			return
+//		case node := <-gc.aliveChan:
+//			// merge the node in
+//
+//			gc.mergeNode(node) // TODO
+//		case message := <-gc.messageChan:
+//			// merge the message in
+//
+//			gc.mergeMessage(message) // TODO
+//		}
+//	}
+//}
 
 // replaced by sendNodes and sendMessages
 //func (gc *Client) sendLoop() {
@@ -228,7 +229,7 @@ func (gc *Client) joinCluster(knownAddr net.IP) {
 	insertNode(gc.nodes[:], node)
 }
 
-// exposed methods:
+// === exposed methods ===
 
 func (gc *Client) Send(message string) error {
 	// send a new message to the network
@@ -248,7 +249,7 @@ func (gc *Client) Shutdown() {
 	close(gc.shutdown)
 }
 
-func (gc *Client) Run(knownAddr net.IP) error {
+func (gc *Client) Run(knownAddr net.IP) {
 	gc.joinCluster(knownAddr)
 	go gc.recvMessages()
 	go gc.recvAlives()
@@ -259,5 +260,8 @@ func (gc *Client) Run(knownAddr net.IP) error {
 	go gc.aliveLoop()
 	go gc.messageLoop()
 
-	go gc.process()
+	//go gc.process()
 }
+
+// TODO:
+//  - Make select random node/message thread-safe
