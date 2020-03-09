@@ -5,6 +5,7 @@ import (
 	"log"
 	"math/rand"
 	"net"
+	"os"
 	"time"
 
 	"coen317/gossip/counter"
@@ -85,6 +86,12 @@ func (gc *Client) sendMessages() {
 
 func (gc *Client) recvMessages() {
 	// TODO
+}
+
+func (gc *Client) joinCluster() {
+	joinIP := os.Args[1]
+	insert()
+
 }
 
 func (gc *Client) handleMessage(conn net.Conn) {
@@ -220,6 +227,7 @@ func (gc *Client) Run() error {
 	//http.HandleFunc("/message/", gc.messageHandler)
 
 	// use these with "encoding/gob"
+	gc.joinCluster()
 	go gc.recvMessages()
 	go gc.recvAlives()
 
