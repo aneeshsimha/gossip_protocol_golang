@@ -1,6 +1,7 @@
 package gossip
 
 import (
+	"coen317/gossip/counter"
 	"math/rand"
 	"testing"
 	"time"
@@ -19,14 +20,16 @@ var contents = [...]string{
 	"why does eve care so much about alice and bob",
 }
 
+var count = counter.New()
+
 func PrepNodes(now time.Time) []messageDescriptor {
 	nodes := make([]messageDescriptor, len(contents))
 	for i, _ := range nodes {
 		nodes[i] = messageDescriptor{
 			Descriptor: Descriptor{
 				Timestamp: now.Add(10 * time.Duration(i) * time.Second),
-				ID:        rand.Uint64() % 5, // these don't matter so they can be truly random
-				Count:     uint64(i),
+				ID:        rand.Uint64() % 5 + 1, // these don't matter so they can be truly random
+				Count:     <-count.Count,
 			},
 			Content: contents[i],
 		}
@@ -55,13 +58,12 @@ func TestNodeMerge(t *testing.T) {
 
 	printNodes(t, nodes)
 
-	count := len(contents)
 	moreNodes := []messageDescriptor{
 		messageDescriptor{
 			Descriptor: Descriptor{
 				Timestamp: now.Add(-10 * time.Second),
 				ID:        rand.Uint64() % 5,
-				Count:     uint64(count),
+				Count:     <-count.Count,
 			},
 			Content: "this shouldn't appear",
 		},
@@ -69,12 +71,11 @@ func TestNodeMerge(t *testing.T) {
 			Descriptor: Descriptor{
 				Timestamp: now.Add(1000 * time.Second),
 				ID:        rand.Uint64() % 5,
-				Count:     uint64(count + 1),
+				Count:     <-count.Count,
 			},
 			Content: "this should replace hello world",
 		},
 	}
-	count += 2
 
 	//merge(nodes, moreNodes, len(nodes))
 
