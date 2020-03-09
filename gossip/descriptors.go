@@ -9,8 +9,8 @@ import (
 // inherited by other xyzDescriptor types
 type Descriptor struct {
 	Timestamp time.Time
-	ID        uint64
-	Count     uint64
+	ID        uint64  // id of originator gossip client
+	Count     uint64  // count value, shouldn't ever be repeated; (ID, Count) tuple for a unique identifying pair
 }
 
 type nodeDescriptor struct {
