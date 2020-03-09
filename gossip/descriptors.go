@@ -3,45 +3,75 @@ package gossip
 import (
 	"hash/fnv"
 	"net"
+	"time"
 )
 
+// inherited by other xyzDescriptor types
+type Descriptor struct {
+	Timestamp time.Time
+	ID        uint64
+	Count     uint64
+}
+
 type nodeDescriptor struct {
-	address   *net.IP
-	timestamp uint64
-	id        uint64
-	addr      net.Addr
+	Descriptor
+	Address *net.IP
 }
 
-func (nd *nodeDescriptor) time() uint64 {
-	return nd.timestamp
+func (d *Descriptor) time() time.Time {
+	return d.Timestamp
 }
 
-func (nd *nodeDescriptor) hash() uint64 {
+func newNodeDescriptor(address *net.IP, timestamp time.Time, id uint64, count uint64) nodeDescriptor {
+	return nodeDescriptor{
+		Descriptor: Descriptor{
+			Timestamp: timestamp,
+			ID:        id,
+			Count:     count,
+		},
+		Address: address,
+	}
+}
+
+//func (nd *nodeDescriptor) time() uint64 {
+//	return nd.Timestamp
+//}
+
+func (nd *nodeDescriptor) collisionHash() uint64 {
 	h := fnv.New64a()
-	h.Write([]byte(nd.address.String()))
+	h.Write([]byte(nd.Address.String()))
 	return h.Sum64()
 }
 
 type messageDescriptor struct {
-	content   []byte
-	timestamp uint64
-	id        uint64
-	addr      net.Addr
+	Descriptor
+	Content string
 }
 
-func (md *messageDescriptor) time() uint64 {
-	return md.timestamp
+func newMessageDescriptor(content string, timestamp time.Time, id uint64, count uint64) messageDescriptor {
+	return messageDescriptor{
+		Descriptor: Descriptor{
+			Timestamp: timestamp,
+			ID:        id,
+			Count:     count,
+		},
+		Content: content,
+	}
 }
 
-func (md *messageDescriptor) hash() uint64 {
+//func (md *messageDescriptor) time() uint64 {
+//	return md.Timestamp
+//}
+
+func (md *messageDescriptor) collisionHash() uint64 {
 	h := fnv.New64a()
-	h.Write(md.content)
+	h.Write([]byte(md.Content))
 	return h.Sum64()
 }
 
 type node interface {
-	time() uint64
-	hash() uint64
+	time() time.Time
+	collisionHash() uint64
 }
 
 //type nodeSet struct {
@@ -51,13 +81,14 @@ type node interface {
 
 // TODO: wip
 func insert(nodes []node, descriptor node, maxSize int) bool {
-	oldest := -1
+	oldest := -1 // index of oldest node
 	for i, e := range nodes {
-		if e.hash() == descriptor.hash() {
+		if e.collisionHash() == descriptor.collisionHash() {
 			// same, just update e
 			// return true
 		}
-		if oldNode := nodes[oldest]; oldNode.time() > descriptor.time() {
+		if oldNode := nodes[oldest]; oldNode.time().After(e.time()) {
+			// if current node is older than oldNode, set oldest node index to current index
 			oldest = i
 		}
 	}
