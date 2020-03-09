@@ -80,10 +80,48 @@ type node interface {
 //}
 
 // TODO: wip
-func insert(nodes []node, descriptor node, maxSize int) bool {
+//  Okay, so this doesn't work, because golang copies interface slices weirdly (linear time rather than constant)
+//func insert(nodes []node, descriptor node, maxSize int) bool {
+//	oldest := 0 // index of oldest node
+//	for i, e := range nodes {
+//		if e == nil {
+//			// array is not full, so just "append"
+//			oldest = i
+//			break
+//		}
+//		if e.collisionHash() == descriptor.collisionHash() {
+//			// node is already in the table, just update e
+//			nodes[i] = descriptor
+//			return true
+//		}
+//
+//		// else, check if the current node is older than the current old node
+//		if oldNode := nodes[oldest]; oldNode.time().After(e.time()) {
+//			// if current node is older than oldNode, set oldest node index to current index
+//			oldest = i
+//		}
+//	}
+//	if nodes[oldest].time().After(descriptor.time()) {
+//		// descriptor is older than the oldest node
+//		return false
+//	}
+//	nodes[oldest] = descriptor
+//	return true
+//}
+
+//func merge(nodes1 []node, nodes2 []node, maxSize int) {
+//	// haha don't ask me about efficiency
+//	// NOTE: nodes2 max size will be nodes1 maxSize + 1, but it does not actually matter.
+//	for _, e := range nodes2 {
+//		insert(nodes1, e, maxSize)
+//	}
+//}
+
+func insertNode(nodes []nodeDescriptor, descriptor nodeDescriptor) bool {
 	oldest := 0 // index of oldest node
 	for i, e := range nodes {
-		if e == nil {
+		if e.ID == 0 {
+			// e is uninitialized
 			// array is not full, so just "append"
 			oldest = i
 			break
@@ -108,10 +146,31 @@ func insert(nodes []node, descriptor node, maxSize int) bool {
 	return true
 }
 
-func merge(nodes1 []node, nodes2 []node, maxSize int) {
-	// haha don't ask me about efficiency
-	// NOTE: nodes2 max size will be nodes1 maxSize + 1, but it does not actually matter.
-	for _, e := range nodes2 {
-		insert(nodes1, e, maxSize)
+func insertMessage(nodes []messageDescriptor, descriptor messageDescriptor) bool {
+	oldest := 0 // index of oldest node
+	for i, e := range nodes {
+		if e.ID == 0 {
+			// e is uninitialized
+			// array is not full, so just "append"
+			oldest = i
+			break
+		}
+		if e.collisionHash() == descriptor.collisionHash() {
+			// node is already in the table, just update e
+			nodes[i] = descriptor
+			return true
+		}
+
+		// else, check if the current node is older than the current old node
+		if oldNode := nodes[oldest]; oldNode.time().After(e.time()) {
+			// if current node is older than oldNode, set oldest node index to current index
+			oldest = i
+		}
 	}
+	if nodes[oldest].time().After(descriptor.time()) {
+		// descriptor is older than the oldest node
+		return false
+	}
+	nodes[oldest] = descriptor
+	return true
 }
