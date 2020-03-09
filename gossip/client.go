@@ -5,7 +5,6 @@ import (
 	"log"
 	"math/rand"
 	"net"
-	"os"
 	"time"
 
 	"coen317/gossip/counter"
@@ -89,8 +88,6 @@ func (gc *Client) recvMessages() {
 }
 
 func (gc *Client) joinCluster() {
-	joinIP := os.Args[1]
-	insert()
 
 }
 
