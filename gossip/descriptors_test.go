@@ -95,4 +95,15 @@ func TestNodeMerge(t *testing.T) {
 	if nodes[7].collisionHash() != moreNodes[1].collisionHash() {
 		t.Errorf("the wrong node was replaced")
 	}
+
+	//otherNodes := []node{
+	//	&nodeDescriptor{
+	//		Descriptor: Descriptor{
+	//			Timestamp: now.Add(1000 * time.Second),
+	//			ID:        rand.Uint64() % 5,
+	//			Count:     uint64(1),
+	//		},
+	//		Address: net.ParseIP("127.0.0.1"),
+	//	},
+	//}
 }
