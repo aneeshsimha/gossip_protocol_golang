@@ -102,6 +102,14 @@ func (gc *Client) handleMessage(conn net.Conn) {
 	gc.messageChan <- msg.Message
 }
 
+// goroutine
+func (gc *Client) messageLoop() {
+	for {
+		desc := <- gc.messageChan
+		insertMessage(gc.messages[:], desc)
+	}
+}
+
 func (gc *Client) sendAlives() {
 	// select a random node Descriptor and send keepalive
 
@@ -144,8 +152,15 @@ func (gc *Client) handleAlive(conn net.Conn) {
 	dec.Decode(&kap)
 
 	for _, desc := range kap.KnownNodes {
-		// do stuff
 		gc.aliveChan <- desc
+	}
+}
+
+// goroutine
+func (gc *Client) aliveLoop() {
+	for {
+		desc := <- gc.aliveChan
+		insertNode(gc.nodes[:], desc)
 	}
 }
 
@@ -234,6 +249,9 @@ func (gc *Client) Run(knownAddr net.IP) error {
 
 	go gc.sendMessages()
 	go gc.sendAlives()
+
+	go gc.aliveLoop()
+	go gc.messageLoop()
 
 	go gc.process()
 }
