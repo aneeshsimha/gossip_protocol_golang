@@ -41,8 +41,8 @@ type Client struct {
 // constructor
 func New(maxNodes int, maxMessages int, alivePort string, messagePort string, aliveTimeout time.Duration, messageTimeout time.Duration) *Client {
 	id := rand.Uint64()
-	for id == 0 {
-		id = rand.Uint64() // 0 is reserved
+	for id < 100 {
+		id = rand.Uint64() // 0-99 are reserved
 	}
 	return &Client{
 		id:             id,
@@ -225,7 +225,7 @@ func (gc *Client) aliveLoop() {
 
 func (gc *Client) joinCluster(knownAddr net.IP) {
 	// only ever called once, when you join the network
-	node := newNodeDescriptor(knownAddr, time.Now(), -1, <-gc.counter.Count)
+	node := newNodeDescriptor(knownAddr, time.Now(), 1, <-gc.counter.Count)
 	insertNode(gc.nodes[:], node)
 }
 
