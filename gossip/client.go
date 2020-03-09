@@ -6,6 +6,8 @@ import (
 	"math/rand"
 	"net"
 	"time"
+
+	"coen317/gossip/counter"
 )
 
 const (
@@ -16,14 +18,12 @@ type Client struct {
 	// collision chance in a 64-bit ID space is n^2 / 2^65
 	id uint64
 
-	self         nodeDescriptor
-	nodes        []nodeDescriptor
-	maxNodes     int
-	aliveCounter uint64
+	self     nodeDescriptor
+	nodes    []nodeDescriptor
+	maxNodes int
 
-	messages       []messageDescriptor
-	maxMessages    int
-	messageCounter uint64
+	messages    []messageDescriptor
+	maxMessages int
 
 	shutdown    chan bool
 	aliveChan   chan nodeDescriptor
@@ -34,6 +34,8 @@ type Client struct {
 
 	aliveTimeout   time.Duration
 	messageTimeout time.Duration
+
+	counter counter.Counter // threadsafe counter type
 }
 
 // constructor
@@ -43,10 +45,8 @@ func New(maxNodes int, maxMessages int, alivePort string, messagePort string, al
 		self:           nodeDescriptor{},
 		nodes:          make([]nodeDescriptor, maxNodes),
 		maxNodes:       maxNodes,
-		aliveCounter:   0,
 		messages:       make([]messageDescriptor, maxNodes),
 		maxMessages:    maxMessages,
-		messageCounter: 0,
 		shutdown:       make(chan bool),
 		aliveChan:      make(chan nodeDescriptor, CHANSIZE),
 		messageChan:    make(chan messageDescriptor, CHANSIZE),
@@ -54,6 +54,7 @@ func New(maxNodes int, maxMessages int, alivePort string, messagePort string, al
 		messagePort:    messagePort,
 		aliveTimeout:   aliveTimeout,
 		messageTimeout: messageTimeout,
+		counter:        counter.New(),
 	}
 }
 
@@ -174,7 +175,14 @@ loop:
 
 func (gc *Client) Send(message string) error {
 	// send a new message to the network
-	// TODO
+	gc.messageChan <- messageDescriptor{
+		Descriptor: Descriptor{
+			Count:     <-gc.counter.Count,
+			ID:        gc.id,
+			Timestamp: time.Now(),
+		},
+		Content: message,
+	}
 
 	return nil
 }
