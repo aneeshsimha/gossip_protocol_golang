@@ -3,6 +3,7 @@ package gossip
 import (
 	"encoding/gob"
 	"log"
+	"math/rand"
 	"net"
 	"time"
 )
@@ -12,11 +13,17 @@ const (
 )
 
 type Client struct {
-	nodes    []nodeDescriptor
-	maxNodes int
+	// collision chance in a 64-bit ID space is n^2 / 2^65
+	id uint64
 
-	messages    []messageDescriptor
-	maxMessages int
+	self         nodeDescriptor
+	nodes        []nodeDescriptor
+	maxNodes     int
+	aliveCounter uint64
+
+	messages       []messageDescriptor
+	maxMessages    int
+	messageCounter uint64
 
 	shutdown    chan bool
 	aliveChan   chan nodeDescriptor
@@ -32,10 +39,14 @@ type Client struct {
 // constructor
 func New(maxNodes int, maxMessages int, alivePort string, messagePort string, aliveTimeout time.Duration, messageTimeout time.Duration) *Client {
 	return &Client{
+		id:             rand.Uint64(),
+		self:           nodeDescriptor{},
 		nodes:          make([]nodeDescriptor, maxNodes),
 		maxNodes:       maxNodes,
+		aliveCounter:   0,
 		messages:       make([]messageDescriptor, maxNodes),
 		maxMessages:    maxMessages,
+		messageCounter: 0,
 		shutdown:       make(chan bool),
 		aliveChan:      make(chan nodeDescriptor, CHANSIZE),
 		messageChan:    make(chan messageDescriptor, CHANSIZE),
@@ -53,11 +64,11 @@ func New(maxNodes int, maxMessages int, alivePort string, messagePort string, al
 //
 //func (gc *Client) aliveHandler(writer http.ResponseWriter, request *http.Request) {
 //	// accept and process incoming keepalives
-//	// if queue is full, then delete the oldest node descriptor
+//	// if queue is full, then delete the oldest node Descriptor
 //}
 
 func (gc *Client) sendMessages() {
-	// 1. select a random message and node descriptor
+	// 1. select a random message and node Descriptor
 	// 2. send message to node, and request a message from node
 	// 3. merge reply into own message slice
 }
@@ -77,9 +88,12 @@ func (gc *Client) handleMessage(conn net.Conn) {
 }
 
 func (gc *Client) sendAlives() {
-	// select a random node descriptor and send keepalive
+	// select a random node Descriptor and send keepalive
 
-	// add own ip + current time to the copy of the node descriptor list before sending
+	// add own ip + current time to the copy of the node Descriptor list before sending
+	// TODO: ...
+	//newNodeDescriptor(conn.LocalAddr(), time.no)
+	//  ...
 }
 
 func (gc *Client) recvAlives() {
