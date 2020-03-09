@@ -36,7 +36,7 @@ type Client struct {
 	aliveTimeout   time.Duration
 	messageTimeout time.Duration
 
-	counter counter.Counter // threadsafe counter type
+	counter *counter.Counter // threadsafe counter type
 }
 
 // constructor
@@ -59,20 +59,29 @@ func New(maxNodes int, maxMessages int, alivePort string, messagePort string, al
 	}
 }
 
-//func (gc *Client) messageHandler(writer http.ResponseWriter, request *http.Request) {
-//	// accept and store incoming messages
-//	// if queue is full, then delete the oldest one
-//}
-//
-//func (gc *Client) aliveHandler(writer http.ResponseWriter, request *http.Request) {
-//	// accept and process incoming keepalives
-//	// if queue is full, then delete the oldest node Descriptor
-//}
-
 func (gc *Client) sendMessages() {
 	// 1. select a random message and node Descriptor
 	// 2. send message to node, and request a message from node
 	// 3. merge reply into own message slice
+
+	// select a random node Descriptor and send random message
+
+	messageTicker := time.NewTicker(gc.messageTimeout)
+	defer messageTicker.Stop()
+	defer log.Println("send loop shut down")
+
+	// loop forever
+	for {
+		select {
+		case <-messageTicker.C: // do every interval
+			// choose a random known node descriptor
+			// choose a random stored message
+			// turn the messageDescriptor into a stringPacket
+			// send the stringPacket
+		case <-gc.shutdown:
+			return
+		}
+	}
 }
 
 func (gc *Client) recvMessages() {
@@ -98,10 +107,24 @@ func (gc *Client) handleMessage(conn net.Conn) {
 func (gc *Client) sendAlives() {
 	// select a random node Descriptor and send keepalive
 
-	// add own ip + current time to the copy of the node Descriptor list before sending
-	// TODO: ...
-	//newNodeDescriptor(conn.LocalAddr(), time.no)
-	//  ...
+	aliveTicker := time.NewTicker(gc.aliveTimeout)
+	defer aliveTicker.Stop()
+	defer log.Println("send loop shut down")
+
+	// loop forever
+	for {
+		select {
+		case <-aliveTicker.C: // do every interval
+			// choose a random known node descriptor
+			// add own ip + current time to the copy of the node Descriptor list before sending
+			// TODO: ...
+			//newNodeDescriptor(conn.LocalAddr(), time.no)
+			//  ...
+			// send the keepAlivePacket
+		case <-gc.shutdown:
+			return
+		}
+	}
 }
 
 func (gc *Client) recvAlives() {
@@ -128,9 +151,10 @@ func (gc *Client) handleAlive(conn net.Conn) {
 	}
 }
 
-func (gc *Client) mergeNode(descriptor nodeDescriptor) {
+func (gc *Client) mergeNode(descriptor *nodeDescriptor) {
 	// utility method
 	// TODO
+	insert(gc.nodes[:], descriptor, gc.maxNodes)
 }
 
 func (gc *Client) mergeMessage(message messageDescriptor) {

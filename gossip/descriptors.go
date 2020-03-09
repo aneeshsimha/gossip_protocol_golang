@@ -15,14 +15,14 @@ type Descriptor struct {
 
 type nodeDescriptor struct {
 	Descriptor
-	Address *net.IP
+	Address net.IP
 }
 
 func (d *Descriptor) time() time.Time {
 	return d.Timestamp
 }
 
-func newNodeDescriptor(address *net.IP, timestamp time.Time, id uint64, count uint64) nodeDescriptor {
+func newNodeDescriptor(address net.IP, timestamp time.Time, id uint64, count uint64) nodeDescriptor {
 	return nodeDescriptor{
 		Descriptor: Descriptor{
 			Timestamp: timestamp,
@@ -90,7 +90,6 @@ func insert(nodes []node, descriptor node, maxSize int) bool {
 		}
 		if e.collisionHash() == descriptor.collisionHash() {
 			// node is already in the table, just update e
-			// TODO: update e
 			nodes[i] = descriptor
 			return true
 		}
@@ -106,13 +105,6 @@ func insert(nodes []node, descriptor node, maxSize int) bool {
 		return false
 	}
 	nodes[oldest] = descriptor
-	//if len(nodes) == maxSize {
-	//	// replace
-	//	nodes[oldest] = descriptor
-	//} else {
-	//	// add to array
-	//	nodes = append(nodes, descriptor)
-	//}
 	return true
 }
 
