@@ -81,25 +81,38 @@ type node interface {
 
 // TODO: wip
 func insert(nodes []node, descriptor node, maxSize int) bool {
-	oldest := -1 // index of oldest node
+	oldest := 0 // index of oldest node
 	for i, e := range nodes {
-		if e.collisionHash() == descriptor.collisionHash() {
-			// same, just update e
-			// return true
+		if e == nil {
+			// array is not full, so just "append"
+			oldest = i
+			break
 		}
+		if e.collisionHash() == descriptor.collisionHash() {
+			// node is already in the table, just update e
+			// TODO: update e
+			nodes[i] = descriptor
+			return true
+		}
+
+		// else, check if the current node is older than the current old node
 		if oldNode := nodes[oldest]; oldNode.time().After(e.time()) {
 			// if current node is older than oldNode, set oldest node index to current index
 			oldest = i
 		}
 	}
-	if oldest == -1 {
+	if nodes[oldest].time().After(descriptor.time()) {
+		// descriptor is older than the oldest node
 		return false
 	}
-	if len(nodes) == maxSize {
-		// replace
-	} else {
-		// add to array
-	}
+	nodes[oldest] = descriptor
+	//if len(nodes) == maxSize {
+	//	// replace
+	//	nodes[oldest] = descriptor
+	//} else {
+	//	// add to array
+	//	nodes = append(nodes, descriptor)
+	//}
 	return true
 }
 
