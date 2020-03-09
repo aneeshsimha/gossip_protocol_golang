@@ -31,6 +31,11 @@ else
     exit 1 >&2
 fi
 
-# golang is now installed and set up, let's move onto the next step
+mkdir -p "${workspace}/bin"
+mkdir -p "${workspace}/src"
 
-git clone 
+# golang is now installed and set up, let's move onto the next step
+# TODO
+
+#cd "${workspace}/src"
+#git clone
