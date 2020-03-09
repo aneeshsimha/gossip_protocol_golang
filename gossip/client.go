@@ -98,6 +98,10 @@ func (gc *Client) handleMessage(conn net.Conn) {
 	msg := StringPayload{}
 	dec.Decode(&msg)
 
+	if msg.Message.ID == gc.id {
+		return // don't bother adding own originating messages
+	}
+
 	gc.messageChan <- msg.Message
 }
 
@@ -151,6 +155,9 @@ func (gc *Client) handleAlive(conn net.Conn) {
 	dec.Decode(&kap)
 
 	for _, desc := range kap.KnownNodes {
+		if desc.ID == gc.id {
+			return // don't bother adding own originating messages
+		}
 		gc.aliveChan <- desc
 	}
 }
