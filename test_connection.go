@@ -11,14 +11,24 @@ import (
 )
 
 // ONLY exported fields are transmitted using gob
+type Bar struct {
+	X int
+}
+
+type baz struct {
+	Y int
+}
+
 type foo struct {
+	Bar      // anonymous struct fields must also be exported types
+	Baz  baz // non-anonymous structs can be unexported types
 	A, B int
 	Msg  string
 	Map  map[string]int
 }
 
 func (f *foo) String() string {
-	return fmt.Sprintf("%d, %d: %s | %v", f.A, f.B, f.Msg, f.Map)
+	return fmt.Sprintf("{%d}, %v, %d, %d: %s | %v", f.X, f.Baz, f.A, f.B, f.Msg, f.Map)
 }
 
 func main() {
@@ -27,7 +37,7 @@ func main() {
 	client := flag.Bool("client", false, "if the program is running as client (otherwise runs as server)")
 	flag.Parse()
 
-	f := foo{7, 42, "hello, world", map[string]int{"hello": 1, "hi": 2, "hey": 3}}
+	f := foo{Bar{19}, baz{33}, 7, 42, "hello, world", map[string]int{"hello": 1, "hi": 2, "hey": 3}}
 
 	if *client {
 		conn, err := net.Dial("tcp", *addr+":"+*port)
@@ -35,13 +45,13 @@ func main() {
 			log.Fatal(err)
 		}
 		enc := gob.NewEncoder(conn)
-		enc.Encode(f)
+		_ = enc.Encode(f) // look we're not programming well here
 	} else {
 		listener, _ := net.Listen("tcp", ":"+*port)
 		conn, _ := listener.Accept()
 		dec := gob.NewDecoder(conn)
 		f2 := new(foo)
-		dec.Decode(&f2)
+		_ = dec.Decode(&f2)
 		fmt.Println(f2)
 	}
 }
