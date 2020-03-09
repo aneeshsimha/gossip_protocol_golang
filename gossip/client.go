@@ -41,8 +41,12 @@ type Client struct {
 
 // constructor
 func New(maxNodes int, maxMessages int, alivePort string, messagePort string, aliveTimeout time.Duration, messageTimeout time.Duration) *Client {
+	id := rand.Uint64()
+	for id == 0 {
+		id = rand.Uint64() // 0 is reserved
+	}
 	return &Client{
-		id:             rand.Uint64(),
+		id:             id,
 		self:           nodeDescriptor{},
 		nodes:          make([]nodeDescriptor, maxNodes),
 		maxNodes:       maxNodes,
@@ -86,12 +90,6 @@ func (gc *Client) sendMessages() {
 
 func (gc *Client) recvMessages() {
 	// TODO
-}
-
-func (gc *Client) joinCluster() {
-	joinIP := os.Args[1]
-	insert()
-
 }
 
 func (gc *Client) handleMessage(conn net.Conn) {
@@ -182,24 +180,31 @@ func (gc *Client) process() {
 	}
 }
 
-func (gc *Client) sendLoop() {
-	aliveTicker := time.NewTicker(gc.aliveTimeout)
-	messageTicker := time.NewTicker(gc.messageTimeout)
+// replaced by sendNodes and sendMessages
+//func (gc *Client) sendLoop() {
+//	aliveTicker := time.NewTicker(gc.aliveTimeout)
+//	messageTicker := time.NewTicker(gc.messageTimeout)
+//
+//loop:
+//	for {
+//		select {
+//		case <-aliveTicker.C:
+//			// send keepalive
+//		case <-messageTicker.C:
+//			// send message
+//		case <-gc.shutdown:
+//			break loop
+//		}
+//	}
+//	aliveTicker.Stop()
+//	messageTicker.Stop()
+//	log.Println("send loop shut down")
+//}
 
-loop:
-	for {
-		select {
-		case <-aliveTicker.C:
-			// send keepalive
-		case <-messageTicker.C:
-			// send message
-		case <-gc.shutdown:
-			break loop
-		}
-	}
-	aliveTicker.Stop()
-	messageTicker.Stop()
-	log.Println("send loop shut down")
+func (gc *Client) joinCluster(knownAddr net.IP) {
+	// only ever called once, when you join the network
+	node := newNodeDescriptor(knownAddr, time.Now(), -1, <-gc.counter.Count)
+	insertNode(gc.nodes[:], node)
 }
 
 // exposed methods:
@@ -222,12 +227,8 @@ func (gc *Client) Shutdown() {
 	close(gc.shutdown)
 }
 
-func (gc *Client) Run() error {
-	//http.HandleFunc("/alive/", gc.aliveHandler)
-	//http.HandleFunc("/message/", gc.messageHandler)
-
-	// use these with "encoding/gob"
-	gc.joinCluster()
+func (gc *Client) Run(knownAddr net.IP) error {
+	gc.joinCluster(knownAddr)
 	go gc.recvMessages()
 	go gc.recvAlives()
 
@@ -235,5 +236,4 @@ func (gc *Client) Run() error {
 	go gc.sendAlives()
 
 	go gc.process()
-	//return http.ListenAndServe(":8080", nil)
 }
