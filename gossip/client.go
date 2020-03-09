@@ -222,6 +222,12 @@ func (gc *Client) Send(message string) error {
 	return nil
 }
 
+func (gc *Client) logFile() {
+	//write information to txt file
+	//display message on the CLI
+
+}
+
 func (gc *Client) Shutdown() {
 	close(gc.shutdown)
 }
