@@ -8,8 +8,8 @@ type Counter struct {
 
 func New() *Counter {
 	c := &Counter{
-		countNum: 0,
-		Count: make(chan uint64),
+		countNum: 1, // start at 1
+		Count:    make(chan uint64),
 	}
 	go c.increment()
 	return c
