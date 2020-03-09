@@ -128,8 +128,11 @@ func insertNode(nodes []nodeDescriptor, descriptor nodeDescriptor) bool {
 		}
 		if e.collisionHash() == descriptor.collisionHash() {
 			// node is already in the table, just update e
-			nodes[i] = descriptor
-			return true
+			if e.time().Before(descriptor.time()) {
+				nodes[i] = descriptor
+				return true
+			}
+			return false
 		}
 
 		// else, check if the current node is older than the current old node
@@ -157,8 +160,11 @@ func insertMessage(nodes []messageDescriptor, descriptor messageDescriptor) bool
 		}
 		if e.collisionHash() == descriptor.collisionHash() {
 			// node is already in the table, just update e
-			nodes[i] = descriptor
-			return true
+			if e.time().Before(descriptor.time()) {
+				nodes[i] = descriptor
+				return true
+			}
+			return false
 		}
 
 		// else, check if the current node is older than the current old node
