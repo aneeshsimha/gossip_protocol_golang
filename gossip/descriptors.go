@@ -193,4 +193,3 @@ func randomMessage(nodes1 []messageDescriptor) messageDescriptor {
 	iter := rand.Intn(len(nodes1))
 	return nodes1[iter]
 }
-

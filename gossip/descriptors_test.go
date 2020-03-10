@@ -1,7 +1,7 @@
 package gossip
 
 import (
-	"coen317/gossip/counter"
+	"github.com/aneeshsimha/gossip_protocol_golang/counter"
 	"math/rand"
 	"testing"
 	"time"
@@ -28,7 +28,7 @@ func PrepNodes(now time.Time) []messageDescriptor {
 		nodes[i] = messageDescriptor{
 			Descriptor: Descriptor{
 				Timestamp: now.Add(10 * time.Duration(i) * time.Second),
-				ID:        rand.Uint64() % 5 + 1, // these don't matter so they can be truly random
+				ID:        rand.Uint64()%5 + 1, // these don't matter so they can be truly random
 				Count:     <-count.Count,
 			},
 			Content: contents[i],

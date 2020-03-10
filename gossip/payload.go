@@ -18,7 +18,7 @@ type KeepAlivePayload struct {
 func preparePayload(nodes1 []nodeDescriptor, me nodeDescriptor) KeepAlivePayload {
 	newList := make([]nodeDescriptor, len(nodes1)+1)
 	copy(newList, nodes1)
-	newList[len(nodes1)] = me  // insert as last element
+	newList[len(nodes1)] = me // insert as last element
 	kap := KeepAlivePayload{newList}
 	return kap
 }
