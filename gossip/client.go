@@ -218,6 +218,7 @@ func (gc *Client) handleAlive(conn net.Conn) {
 		if desc.ID == gc.id {
 			continue // don't bother adding own originating messages
 		}
+		fmt.Println(desc.Address)
 		if desc.Address == nil {
 			// if it's a nil address, then it's the address of the sender
 			strAddr := strings.Split(conn.RemoteAddr().String(), ":")[0]
