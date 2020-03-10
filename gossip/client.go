@@ -5,11 +5,8 @@ import (
 	"log"
 	"math/rand"
 	"net"
+	"os"
 	"time"
-	"bufio"
-    "fmt"
-    "io/ioutil"
-    "os"
 
 	"coen317/gossip/counter"
 )
@@ -186,7 +183,7 @@ func (gc *Client) handleAlive(conn net.Conn) {
 		if desc.ID == gc.id {
 			continue // don't bother adding own originating messages
 		}
-		logFile(f, desc)
+		logFile(desc)
 		gc.aliveChan <- desc
 	}
 }
@@ -257,8 +254,6 @@ func (gc *Client) joinCluster(knownAddr net.IP) {
 	//TODO: Save node? im not sure why knowaddr is used I thought we make a node of ourselves here and send it to knownAddr
 	insertNode(gc.nodes[:], node)
 
-	
-
 }
 
 // === exposed methods ===
@@ -277,15 +272,21 @@ func (gc *Client) Send(message string) error {
 	return nil
 }
 
-func (gc *Client) logFile(logs File, payload nodeDescriptor) {
+func (gc *Client) logFile(payload nodeDescriptor) {
 	//write information to txt file
 	//display message on the CLI
 
-
-
-}
-
-func (gc *Clinet) createFile(){
+	f, err := os.OpenFile("logfile.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if _, err := f.Write([]byte("ID of Origin: " + payload.ID + "\t Node Address: " + payload.Address + "\t Time: " + payload.Timestamp + "appended some data\n")); err != nil {
+		f.Close() // ignore error; Write error takes precedence
+		log.Fatal(err)
+	}
+	if err := f.Close(); err != nil {
+		log.Fatal(err)
+	}
 
 }
 
@@ -295,7 +296,6 @@ func (gc *Client) Shutdown() {
 
 func (gc *Client) Run(knownAddr net.IP) {
 	gc.joinCluster(knownAddr)
-	
 
 	defer f.Close() //should the close be here?
 
