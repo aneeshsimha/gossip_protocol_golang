@@ -203,10 +203,13 @@ func (gc *Client) handleAlive(conn net.Conn) {
 	kap := KeepAlivePayload{}
 	dec.Decode(&kap)
 
+	log.Printf("received alive packet\n")
+
 	for _, desc := range kap.KnownNodes {
 		if desc.ID == gc.id {
 			continue // don't bother adding own originating messages
 		}
+		log.Printf("%s\n", desc)
 		gc.logFile(desc)
 		gc.aliveChan <- desc
 	}

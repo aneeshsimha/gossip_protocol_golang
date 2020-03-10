@@ -17,8 +17,8 @@ func main() {
 		3,
 		*alivePort,
 		*msgPort,
-		100*time.Millisecond,
-		100*time.Millisecond,
+		1000*time.Millisecond,
+		1000*time.Millisecond,
 	)
 	gc.Run(*addr)
 	for {
