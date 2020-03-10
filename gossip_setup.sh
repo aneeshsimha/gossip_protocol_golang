@@ -42,3 +42,6 @@ mkdir -p "${workspace}/src/github.com/aneeshsimha/"
 
 #cd "${workspace}/src"
 #git clone
+
+cd "${workspace}/src/github.com/aneeshsimha/" || exit
+git clone "https://github.com/aneeshsimha/gossip_protocol_golang.git"
