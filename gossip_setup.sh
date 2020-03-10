@@ -4,6 +4,7 @@
 
 sudo apt-get update
 sudo apt-get -y upgrade
+sudo apt-get install emacs
 
 install_path='/usr/local/'
 workspace="${HOME}/go/"
