@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"github.com/aneeshsimha/gossip_protocol_golang/gossip"
 	"time"
 )
@@ -21,7 +22,9 @@ func main() {
 		1000*time.Millisecond,
 	)
 	gc.Run(*addr)
-	for {
+	for i := 0; i < 10; i++ {
 		time.Sleep(time.Second)
 	}
+
+	fmt.Println("\n", gc.Nodes())
 }

@@ -360,5 +360,9 @@ func (gc *Client) Run(knownAddr string) {
 	//go gc.process()
 }
 
+func (gc *Client) Nodes() []nodeDescriptor {
+	return gc.nodes
+}
+
 // TODO:
 //  - Make select random node/message thread-safe
