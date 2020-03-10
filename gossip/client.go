@@ -2,14 +2,12 @@ package gossip
 
 import (
 	"encoding/gob"
+	"fmt"
 	"log"
 	"math/rand"
 	"net"
+	"os"
 	"time"
-	"bufio"
-    "fmt"
-    "io/ioutil"
-    "os"
 
 	"github.com/aneeshsimha/gossip_protocol_golang/counter"
 )
@@ -209,6 +207,7 @@ func (gc *Client) handleAlive(conn net.Conn) {
 		if desc.ID == gc.id {
 			continue // don't bother adding own originating messages
 		}
+		gc.logFile(desc)
 		gc.aliveChan <- desc
 	}
 }
@@ -279,8 +278,6 @@ func (gc *Client) joinCluster(knownAddr net.IP) {
 	//TODO: Save node? im not sure why knowaddr is used I thought we make a node of ourselves here and send it to knownAddr
 	insertNode(gc.nodes[:], node)
 
-	
-
 }
 
 // === exposed methods ===
@@ -299,17 +296,32 @@ func (gc *Client) Send(message string) error {
 	return nil
 }
 
-//func (gc *Client) logFile(logs File, payload nodeDescriptor) {
-//	//write information to txt file
-//	//display message on the CLI
-//
-//
-//
-//}
+func (gc *Client) logFile(payload nodeDescriptor) {
+	//write information to txt file
+	//display message on the CLI
 
-//func (gc *Clinet) createFile(){
-//
-//}
+	f, err := os.OpenFile("logfile.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	bytes := []byte(fmt.Sprintf(
+		"ID of Origin: %s\t Node Address: %s\t Time: %v\tappended some data\n",
+		payload.ID,
+		payload.Address.String(),
+		payload.Timestamp,
+	))
+	if _, err := f.Write(bytes); err != nil {
+		f.Close() // ignore error; Write error takes precedence
+		log.Fatal(err)
+	}
+	if err := f.Close(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func (gc *Client) createFile() {
+
+}
 
 func (gc *Client) Shutdown() {
 	close(gc.shutdown)
