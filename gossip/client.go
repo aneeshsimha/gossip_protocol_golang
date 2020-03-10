@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"net"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/aneeshsimha/gossip_protocol_golang/counter"
@@ -178,8 +179,9 @@ func (gc *Client) sendAlive() {
 	defer conn.Close() // this is why this is its own function
 
 	// make/get self node
-	me := newNodeDescriptor(net.ParseIP(conn.LocalAddr().String()), time.Now(), gc.id, <-gc.counter.Count)
-	log.Printf("created self decriptor with IP: %v\n", me.Address)
+	strAddr := strings.Split(conn.LocalAddr().String(), ":")[0]
+	me := newNodeDescriptor(net.ParseIP(strAddr), time.Now(), gc.id, <-gc.counter.Count)
+	log.Printf("created self descriptor %s\n", me)
 	kap := preparePayload(gc.nodes, me)
 
 	log.Printf("sent packet: [")
