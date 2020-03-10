@@ -43,6 +43,7 @@ type Client struct {
 
 // constructor
 func New(maxNodes int, maxMessages int, alivePort string, messagePort string, aliveTimeout time.Duration, messageTimeout time.Duration) *Client {
+	rand.Seed(time.Now().UnixNano())
 	id := rand.Uint64()
 	for id < 100 {
 		id = rand.Uint64() // 0-99 are reserved
@@ -348,7 +349,6 @@ func (gc *Client) Shutdown() {
 }
 
 func (gc *Client) Run(knownAddr string) {
-	rand.Seed(time.Now().UnixNano())
 	// a nil addr means it's the first node, others will join
 	if knownAddr != "" {
 		gc.joinCluster(net.ParseIP(knownAddr))
