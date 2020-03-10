@@ -179,12 +179,14 @@ func (gc *Client) sendAlive() {
 
 	// make/get self node
 	me := newNodeDescriptor(net.ParseIP(conn.LocalAddr().String()), time.Now(), gc.id, <-gc.counter.Count)
+	log.Printf("created self decriptor with IP: %v\n", me.Address)
 	kap := preparePayload(gc.nodes, me)
 
 	log.Printf("sent packet: [")
 	for _, e := range kap.KnownNodes {
 		fmt.Printf("{%s, id:%d, count:%d}", e.Address, e.ID, e.Count)
 	}
+	fmt.Printf("]\n")
 
 	enc := gob.NewEncoder(conn)
 	_ = enc.Encode(kap)
