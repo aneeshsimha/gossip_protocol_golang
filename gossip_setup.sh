@@ -32,7 +32,7 @@ else
 fi
 
 mkdir -p "${workspace}/bin"
-mkdir -p "${workspace}/src"
+mkdir -p "${workspace}/src/github.com/aneeshsimha/"
 
 # golang is now installed and set up, let's move onto the next step
 # TODO
