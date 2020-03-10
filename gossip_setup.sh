@@ -19,10 +19,12 @@ sudo tar -xvf ${go_tar}
 sudo mv go "${install_path}"
 
 # append [install path / workspace path / bin directory of both] to bash profile
-echo "\n\n# golang install" | sudo tee -a ~/.profile
+echo "# golang install" | sudo tee -a ~/.profile
 echo "export GOROOT=${install_path}/go" | sudo tee -a ~/.profile
 echo "export GOPATH=${workspace}" | sudo tee -a ~/.profile
 echo 'export PATH=$GOPATH/bin:$GOROOT/bin:$PATH' | sudo tee -a ~/.profile
+
+source "/home/ubuntu/.profile"
 
 if [ "$(go version)" = 'go version go1.14 linux/amd64' ]; then
     echo "'$(go version)' installed correctly"
