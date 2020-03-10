@@ -10,8 +10,8 @@ import (
 // inherited by other xyzDescriptor types
 type Descriptor struct {
 	Timestamp time.Time
-	ID        uint64  // id of originator gossip client
-	Count     uint64  // count value, shouldn't ever be repeated; (ID, Count) tuple for a unique identifying pair
+	ID        uint64 // id of originator gossip client
+	Count     uint64 // count value, shouldn't ever be repeated; (ID, Count) tuple for a unique identifying pair
 }
 
 type nodeDescriptor struct {
@@ -184,18 +184,13 @@ func insertMessage(nodes []messageDescriptor, descriptor messageDescriptor) bool
 }
 
 // utility functions to select random node
-func selectNeighbor(nodes1 []node) node {
+func randomNeighbor(nodes1 []nodeDescriptor) nodeDescriptor {
 	iter := rand.Intn(len(nodes1))
 	return nodes1[iter]
 }
 
-// utility functions to make a seperate list of descriptors to send to another node
-func prepareRequest(nodes1 []node, me node) node[] {
-	newList := make([]node,len(node)+1)
-	for i,e := range nodes1{
-		insert(newList, e)
-	}
-	insert(newList,me)
-	return newList
+func randomMessage(nodes1 []messageDescriptor) messageDescriptor {
+	iter := rand.Intn(len(nodes1))
+	return nodes1[iter]
 }
 
