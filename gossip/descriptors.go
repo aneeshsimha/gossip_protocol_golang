@@ -15,7 +15,7 @@ type Descriptor struct {
 	Count     uint64 // count value, shouldn't ever be repeated; (ID, Count) tuple for a unique identifying pair
 }
 
-func (d *Descriptor) String() string {
+func (d Descriptor) String() string {
 	return fmt.Sprintf("{Timestamp: %v, ID: %v, Count: %v}", d.Timestamp, d.ID, d.Count)
 }
 
@@ -28,7 +28,7 @@ type nodeDescriptor struct {
 	Address net.IP
 }
 
-func (nd *nodeDescriptor) String() string {
+func (nd nodeDescriptor) String() string {
 	return fmt.Sprintf("{nodeDescriptor:: %s, Address: %s}", nd.Descriptor, nd.Address)
 }
 
