@@ -181,6 +181,11 @@ func (gc *Client) sendAlive() {
 	me := newNodeDescriptor(net.ParseIP(conn.LocalAddr().String()), time.Now(), gc.id, <-gc.counter.Count)
 	kap := preparePayload(gc.nodes, me)
 
+	log.Printf("sent packet: [")
+	for _, e := range kap.KnownNodes {
+		fmt.Printf("{%s, id:%d, count:%d}", e.Address, e.ID, e.Count)
+	}
+
 	enc := gob.NewEncoder(conn)
 	_ = enc.Encode(kap)
 }
@@ -203,7 +208,7 @@ func (gc *Client) handleAlive(conn net.Conn) {
 	kap := KeepAlivePayload{}
 	dec.Decode(&kap)
 
-	log.Printf("received alive packet\n")
+	log.Printf("received alive packet with %d nodes\n", len(kap.KnownNodes))
 
 	for _, desc := range kap.KnownNodes {
 		if desc.ID == gc.id {
