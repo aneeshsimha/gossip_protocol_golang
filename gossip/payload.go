@@ -1,7 +1,5 @@
 package gossip
 
-import "log"
-
 //const (
 //	KeepAlive = -1
 //	String    = -2
@@ -29,7 +27,7 @@ func preparePayload(nodes1 []nodeDescriptor, me nodeDescriptor) KeepAlivePayload
 		}
 	}
 	newList = append(newList, me) // insert as last element
-	log.Printf("len: %v ||| %v\n", len(newList), newList)
+	//log.Printf("prepared payload with len: %v ||| %v\n", len(newList), newList)
 	kap := KeepAlivePayload{newList}
 	return kap
 }

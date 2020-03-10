@@ -179,8 +179,8 @@ func (gc *Client) sendAlive() {
 	defer conn.Close() // this is why this is its own function
 
 	// make/get self node
-	strAddr := strings.Split(conn.LocalAddr().String(), ":")[0]
-	me := newNodeDescriptor(net.ParseIP(strAddr), time.Now(), gc.id, <-gc.counter.Count)
+	//strAddr := strings.Split(conn.LocalAddr().String(), ":")[0]
+	me := newNodeDescriptor(nil, time.Now(), gc.id, <-gc.counter.Count) // filled in on the other end
 	log.Printf("created self descriptor %s\n", me)
 	kap := preparePayload(gc.nodes, me)
 
@@ -217,6 +217,10 @@ func (gc *Client) handleAlive(conn net.Conn) {
 	for _, desc := range kap.KnownNodes {
 		if desc.ID == gc.id {
 			continue // don't bother adding own originating messages
+		}
+		if desc.Address == nil {
+			// if it's a nil address, then it's the address of the sender
+			desc.Address = net.ParseIP(strings.Split(conn.RemoteAddr().String(), ":")[0])
 		}
 		log.Printf("%s\n", desc)
 		gc.logFile(desc)
