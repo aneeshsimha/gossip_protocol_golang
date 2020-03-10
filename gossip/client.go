@@ -220,7 +220,9 @@ func (gc *Client) handleAlive(conn net.Conn) {
 		}
 		if desc.Address == nil {
 			// if it's a nil address, then it's the address of the sender
-			desc.Address = net.ParseIP(strings.Split(conn.RemoteAddr().String(), ":")[0])
+			strAddr := strings.Split(conn.RemoteAddr().String(), ":")[0]
+			desc.Address = net.ParseIP(strAddr)
+			log.Printf("received node with nil ip, changed to %v (%v)", desc.Address, strAddr)
 		}
 		//log.Printf("%s\n", desc)
 		gc.logFile(desc)
