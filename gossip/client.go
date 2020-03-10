@@ -348,6 +348,7 @@ func (gc *Client) Shutdown() {
 }
 
 func (gc *Client) Run(knownAddr string) {
+	rand.Seed(time.Now().UnixNano())
 	// a nil addr means it's the first node, others will join
 	if knownAddr != "" {
 		gc.joinCluster(net.ParseIP(knownAddr))
