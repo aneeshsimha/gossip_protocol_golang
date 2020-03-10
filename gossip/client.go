@@ -77,8 +77,10 @@ func (gc *Client) sendMessages() {
 	for {
 		select {
 		case <-messageTicker.C: // do every interval
-			// TODO
 			//  choose a random known node descriptor
+			selectNeighbor(gc.nodes)
+			// TODO
+
 			//  choose a random stored message
 			//  turn the messageDescriptor into a stringPacket
 			//  send the stringPacket
@@ -133,8 +135,11 @@ func (gc *Client) sendAlives() {
 		select {
 		case <-aliveTicker.C: // do every interval
 			// choose a random known node descriptor
+			randomNode =: selectNeighbor(gc.nodes)
 			// add own ip + current time to the copy of the node Descriptor list before sending
-			// TODO: ...
+			me = newNodeDescriptor(conn.LocalAddr,time.Now())
+			list = prepareRequest(gc.nodes,me)
+			// TODO: make/get self node and send to all nodes in view
 			//newNodeDescriptor(conn.LocalAddr(), time.no)
 			//  ...
 			// send the keepAlivePacket
@@ -233,6 +238,7 @@ func (gc *Client) aliveLoop() {
 func (gc *Client) joinCluster(knownAddr net.IP) {
 	// only ever called once, when you join the network
 	node := newNodeDescriptor(knownAddr, time.Now(), 1, <-gc.counter.Count)
+	//TODO: Save node? im not sure why knowaddr is used I thought we make a node of ourselves here and send it to knownAddr
 	insertNode(gc.nodes[:], node)
 }
 
