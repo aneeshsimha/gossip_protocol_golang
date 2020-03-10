@@ -78,7 +78,7 @@ func (gc *Client) sendMessages() {
 		select {
 		case <-messageTicker.C: // do every interval
 			//  choose a random known node descriptor
-			selectNeighbor(gc.nodes)
+			randomNode := randomNeighbor(gc.nodes)
 			// TODO
 
 			//  choose a random stored message
@@ -134,19 +134,30 @@ func (gc *Client) sendAlives() {
 	for {
 		select {
 		case <-aliveTicker.C: // do every interval
-			// choose a random known node descriptor
-			randomNode =: selectNeighbor(gc.nodes)
-			// add own ip + current time to the copy of the node Descriptor list before sending
-			me = newNodeDescriptor(conn.LocalAddr,time.Now())
-			list = prepareRequest(gc.nodes,me)
-			// TODO: make/get self node and send to all nodes in view
-			//newNodeDescriptor(conn.LocalAddr(), time.no)
-			//  ...
-			// send the keepAlivePacket
+			gc.sendAlive() // package this into a single function because it has a defer
 		case <-gc.shutdown:
 			return
 		}
 	}
+}
+
+func (gc *Client) sendAlive() {
+	// choose a random known node descriptor
+	// add own ip + current time to the copy of the node Descriptor list before sending
+
+	randomNode := randomNeighbor(gc.nodes)
+	conn, err := net.Dial("tcp", randomNode.Address.String()+":"+gc.alivePort)
+	if err != nil {
+		log.Println(err)
+	}
+	defer conn.Close() // this is why this is its own function
+
+	// make/get self node
+	me := newNodeDescriptor(net.ParseIP(conn.LocalAddr().String()), time.Now(), gc.id, <-gc.counter.Count)
+	kap := preparePayload(gc.nodes, me)
+
+	enc := gob.NewEncoder(conn)
+	_ = enc.Encode(kap)
 }
 
 func (gc *Client) recvAlives() {
