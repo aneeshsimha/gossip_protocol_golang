@@ -6,6 +6,10 @@ import (
 	"math/rand"
 	"net"
 	"time"
+	"bufio"
+    "fmt"
+    "io/ioutil"
+    "os"
 
 	"github.com/aneeshsimha/gossip_protocol_golang/counter"
 )
@@ -274,6 +278,9 @@ func (gc *Client) joinCluster(knownAddr net.IP) {
 	node := newNodeDescriptor(knownAddr, time.Now(), 1, <-gc.counter.Count)
 	//TODO: Save node? im not sure why knowaddr is used I thought we make a node of ourselves here and send it to knownAddr
 	insertNode(gc.nodes[:], node)
+
+	
+
 }
 
 // === exposed methods ===
@@ -292,11 +299,17 @@ func (gc *Client) Send(message string) error {
 	return nil
 }
 
-func (gc *Client) logFile() {
-	//write information to txt file
-	//display message on the CLI
+//func (gc *Client) logFile(logs File, payload nodeDescriptor) {
+//	//write information to txt file
+//	//display message on the CLI
+//
+//
+//
+//}
 
-}
+//func (gc *Clinet) createFile(){
+//
+//}
 
 func (gc *Client) Shutdown() {
 	close(gc.shutdown)
