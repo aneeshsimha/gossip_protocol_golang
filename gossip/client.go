@@ -212,7 +212,7 @@ func (gc *Client) handleAlive(conn net.Conn) {
 	kap := KeepAlivePayload{}
 	dec.Decode(&kap)
 
-	log.Printf("received alive packet with %d nodes\n", len(kap.KnownNodes))
+	log.Printf("received alive packet with %d nodes: %v\n", len(kap.KnownNodes), kap.KnownNodes)
 
 	for _, desc := range kap.KnownNodes {
 		if desc.ID == gc.id {
@@ -222,7 +222,7 @@ func (gc *Client) handleAlive(conn net.Conn) {
 			// if it's a nil address, then it's the address of the sender
 			desc.Address = net.ParseIP(strings.Split(conn.RemoteAddr().String(), ":")[0])
 		}
-		log.Printf("%s\n", desc)
+		//log.Printf("%s\n", desc)
 		gc.logFile(desc)
 		gc.aliveChan <- desc
 	}
