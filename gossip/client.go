@@ -216,9 +216,10 @@ func (gc *Client) handleAlive(conn net.Conn) {
 
 	for _, desc := range kap.KnownNodes {
 		if desc.ID == gc.id {
+			fmt.Println("dupe:", desc.ID, desc.Address)
 			continue // don't bother adding own originating messages
 		}
-		fmt.Println(desc.Address)
+		fmt.Println(desc.ID, desc.Address)
 		if desc.Address == nil {
 			// if it's a nil address, then it's the address of the sender
 			strAddr := strings.Split(conn.RemoteAddr().String(), ":")[0]
