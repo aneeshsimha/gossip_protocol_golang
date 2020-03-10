@@ -7,7 +7,7 @@ import (
 	"net"
 	"time"
 
-	"coen317/gossip/counter"
+	"github.com/aneeshsimha/gossip_protocol_golang/counter"
 )
 
 const (
@@ -44,6 +44,7 @@ func New(maxNodes int, maxMessages int, alivePort string, messagePort string, al
 	for id < 100 {
 		id = rand.Uint64() // 0-99 are reserved
 	}
+	log.Printf("creating client with: id: %d, alivePort: %s, messagePort: %s\n", id, alivePort, messagePort)
 	return &Client{
 		id:             id,
 		self:           nodeDescriptor{},
@@ -78,7 +79,7 @@ func (gc *Client) sendMessages() {
 		select {
 		case <-messageTicker.C: // do every interval
 			//  choose a random known node descriptor
-			randomNode := randomNeighbor(gc.nodes)
+			//randomNode := randomNeighbor(gc.nodes)
 			// TODO
 
 			//  choose a random stored message
@@ -91,11 +92,15 @@ func (gc *Client) sendMessages() {
 }
 
 func (gc *Client) recvMessages() {
-	listener, _ := net.Listen("tcp", gc.messagePort)
+	listener, err := net.Listen("tcp", ":"+gc.messagePort)
+	if err != nil {
+		log.Fatal(err)
+	}
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
 			log.Println(err)
+			continue
 		}
 		go gc.handleMessage(conn)
 	}
@@ -132,12 +137,14 @@ func (gc *Client) sendAlives() {
 
 	// loop forever
 	for {
+		log.Println("top of send alive loop")
 		select {
 		case <-aliveTicker.C: // do every interval
 			gc.sendAlive() // package this into a single function because it has a defer
 		case <-gc.shutdown:
 			return
 		}
+		log.Println("bottom of send alive loop")
 	}
 }
 
@@ -146,9 +153,25 @@ func (gc *Client) sendAlive() {
 	// add own ip + current time to the copy of the node Descriptor list before sending
 
 	randomNode := randomNeighbor(gc.nodes)
+	for i := 0; i < 5; i += 1 {
+		// try to get an existing random node 5 times
+		if randomNode.Address != nil {
+			break
+		} else {
+			randomNode = randomNeighbor(gc.nodes)
+		}
+	}
+	if randomNode.Address == nil {
+		log.Println("nil node")
+		return
+	}
+	log.Println(randomNode)
+
 	conn, err := net.Dial("tcp", randomNode.Address.String()+":"+gc.alivePort)
+	log.Println("conn:", conn)
 	if err != nil {
 		log.Println(err)
+		return
 	}
 	defer conn.Close() // this is why this is its own function
 
@@ -161,7 +184,7 @@ func (gc *Client) sendAlive() {
 }
 
 func (gc *Client) recvAlives() {
-	listener, _ := net.Listen("tcp", gc.alivePort)
+	listener, _ := net.Listen("tcp", ":"+gc.alivePort)
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
@@ -279,16 +302,19 @@ func (gc *Client) Shutdown() {
 	close(gc.shutdown)
 }
 
-func (gc *Client) Run(knownAddr net.IP) {
-	gc.joinCluster(knownAddr)
-	go gc.recvMessages()
+func (gc *Client) Run(knownAddr string) {
+	// a nil addr means it's the first node, others will join
+	if knownAddr != "" {
+		gc.joinCluster(net.ParseIP(knownAddr))
+	}
+	//go gc.recvMessages()
 	go gc.recvAlives()
 
-	go gc.sendMessages()
+	//go gc.sendMessages()
 	go gc.sendAlives()
 
 	go gc.aliveLoop()
-	go gc.messageLoop()
+	//go gc.messageLoop()
 
 	//go gc.process()
 }
