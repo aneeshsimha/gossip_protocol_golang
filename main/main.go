@@ -3,12 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/aneeshsimha/gossip_protocol_golang/gossip"
 	"log"
 	"math/rand"
 	"os"
 	"time"
-
-	"github.com/aneeshsimha/gossip_protocol_golang/gossip"
 )
 
 const (
@@ -28,7 +27,8 @@ const (
 	Light_Purple = "\033[1;35m"
 	Light_Cyan   = "\033[1;36m"
 	White        = "\033[1;37m"
-	CLEAR        = "\033[0m"
+
+	CLEAR = "\033[0m"
 )
 
 var COLORS = []string{
@@ -47,7 +47,9 @@ var COLORS = []string{
 
 func main() {
 	addr := flag.String("addr", "", "the known address of a node to join the network through")
-	alivePort := flag.String("alive", "8000", "port for keep alives")
+	numNeighbors := flag.Int("num", 3, "number of neighbors each node keeps track of")
+	numMessages := flag.Int("msgs", 3, "number of messages each node keeps track of")
+	alivePort := flag.String("alive", "8000", "port for keepalives")
 	msgPort := flag.String("msgPort", "8001", "port for message passing")
 	loops := flag.Uint64("loops", 10, "number of seconds to loop for")
 	send := flag.Uint64("send", 0, "when to send the message")
@@ -60,8 +62,8 @@ func main() {
 	}
 
 	gc := gossip.New(
-		3,
-		3,
+		*numNeighbors,
+		*numMessages,
 		*alivePort,
 		*msgPort,
 		50*time.Millisecond,
@@ -90,14 +92,12 @@ func main() {
 	for _, e := range gc.Nodes() {
 		fmt.Println(e)
 	}
-	log.Println("*********************")
 
 	fmt.Println()
 	log.Println("*** message list ***")
 	for _, e := range gc.Messages() {
 		fmt.Println(e)
 	}
-	log.Println("*********************")
 
 	fmt.Println()
 	log.Printf("joined at %d, looped for %d seconds, sent own message at %d seconds: %s", *join, *loops, sendTime, msg)
