@@ -6,6 +6,7 @@ import (
 	"github.com/aneeshsimha/gossip_protocol_golang/gossip"
 	"log"
 	"math/rand"
+	"os"
 	"time"
 )
 
@@ -50,6 +51,11 @@ func main() {
 	loops := flag.Uint64("loops", 10, "number of seconds to loop for")
 	flag.Parse()
 
+	if *loops <= 3 {
+		fmt.Errorf("use more than 3 seconds")
+		os.Exit(1)
+	}
+
 	gc := gossip.New(
 		3,
 		3,
@@ -61,12 +67,13 @@ func main() {
 	gc.Run(*addr)
 
 	rand.Seed(time.Now().UnixNano())
-	sendTime := rand.Uint64()%(*loops-1) + 1
+	sendTime := rand.Uint64()%(*loops-3) + 1
 	log.Printf("looping for %d seconds, sending a message at %d seconds", *loops, sendTime)
 
 	time.Sleep(time.Duration(sendTime) * time.Second)
 	//gc.Send(fmt.Sprintf("a message @ %v", sendTime))
-	gc.Send(fmt.Sprintf("%sa colorful message @ %v%s", COLORS[rand.Int() % len(COLORS)], sendTime, CLEAR))
+	msg := fmt.Sprintf("%sa colorful message @ %v%s", COLORS[rand.Int() % len(COLORS)], sendTime, CLEAR)
+	gc.Send(msg)
 	time.Sleep(time.Duration(*loops-sendTime) * time.Second)
 
 	gc.Shutdown()
@@ -79,5 +86,5 @@ func main() {
 	for _, e := range gc.Messages() {
 		fmt.Println(e)
 	}
-	log.Printf("looped for %d seconds, sent own message at %d seconds", *loops, sendTime)
+	log.Printf("looped for %d seconds, sent own message at %d seconds: %s", *loops, sendTime, msg)
 }
