@@ -130,7 +130,7 @@ func (gc *Client) sendAlive() {
 	conn, err := net.Dial("tcp", randomNode.Address.String()+":"+gc.alivePort)
 	//log.Println("conn:", conn)
 	if err != nil {
-		log.Println(err)
+		//log.Println(err)
 		return
 	}
 	defer conn.Close() // this is why this is its own function
@@ -173,7 +173,7 @@ func (gc *Client) sendMessage() {
 	conn, err := net.Dial("tcp", randomNode.Address.String()+":"+gc.messagePort)
 	//log.Println("sendMessage: conn:", conn)
 	if err != nil {
-		log.Println(err)
+		//log.Println(err)
 		return
 	}
 	defer conn.Close() // this is why this is its own function
@@ -198,7 +198,7 @@ func (gc *Client) recvAlives() {
 		default:
 			conn, err := listener.Accept()
 			if err != nil {
-				log.Println(err)
+				//log.Println(err)
 			}
 			go gc.handleAlive(conn)
 		}
@@ -219,7 +219,7 @@ func (gc *Client) recvMessages() {
 		default:
 			conn, err := listener.Accept()
 			if err != nil {
-				log.Println(err)
+				//log.Println(err)
 				continue
 			}
 			//log.Println("got message connection from", conn.RemoteAddr())
