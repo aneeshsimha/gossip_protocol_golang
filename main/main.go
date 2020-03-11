@@ -79,14 +79,18 @@ func main() {
 	gc.Shutdown()
 	time.Sleep(time.Second)
 
+	fmt.Println()
 	log.Println("*** node descriptor list ***")
 	for _, e := range gc.Nodes() {
 		fmt.Println(e)
 	}
 
+	fmt.Println()
 	log.Println("*** message list ***")
 	for _, e := range gc.Messages() {
 		fmt.Println(e)
 	}
+
+	fmt.Println()
 	log.Printf("\nlooped for %d seconds, sent own message at %d seconds: %s", *loops, sendTime, msg)
 }
