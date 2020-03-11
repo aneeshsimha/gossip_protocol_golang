@@ -219,6 +219,7 @@ func (gc *Client) recvMessages() {
 				log.Println(err)
 				continue
 			}
+			log.Println("got message connection from", conn.RemoteAddr())
 			go gc.handleMessage(conn)
 		}
 	}
@@ -261,7 +262,7 @@ func (gc *Client) handleMessage(conn net.Conn) {
 		return // don't bother adding own originating messages
 	}
 
-	log.Println(msg.Message.Content)
+	log.Println("handling message:", msg.Message.Content)
 	gc.messageChan <- msg.Message
 }
 
