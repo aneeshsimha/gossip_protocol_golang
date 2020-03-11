@@ -49,6 +49,7 @@ func main() {
 	alivePort := flag.String("alive", "8000", "port for keep alives")
 	msgPort := flag.String("msgPort", "8001", "port for message passing")
 	loops := flag.Uint64("loops", 10, "number of seconds to loop for")
+	delay := flag.Uint64("delay", 0, "when to send the message")
 	flag.Parse()
 
 	if *loops <= 3 {
@@ -66,8 +67,10 @@ func main() {
 	)
 	gc.Run(*addr)
 
-	rand.Seed(time.Now().UnixNano())
 	sendTime := rand.Uint64()%(*loops-3) + 1
+	if *delay == 0 {
+		sendTime = *delay
+	}
 	log.Printf("looping for %d seconds, sending a message at %d seconds", *loops, sendTime)
 
 	time.Sleep(time.Duration(sendTime) * time.Second)
