@@ -286,6 +286,7 @@ func (gc *Client) messageLoop() {
 		case <-gc.shutdown:
 			return
 		case desc := <-gc.messageChan:
+			fmt.Println("inserting message:", desc)
 			insertMessage(gc.messages[:], desc)
 		}
 	}
@@ -302,7 +303,7 @@ func (gc *Client) joinCluster(knownAddr net.IP) {
 
 func (gc *Client) Send(message string) error {
 	// send a new message to the network
-	gc.messageChan <- messageDescriptor{
+	msg := messageDescriptor{
 		Descriptor: Descriptor{
 			Count:     <-gc.counter.Count,
 			ID:        gc.id,
@@ -310,6 +311,9 @@ func (gc *Client) Send(message string) error {
 		},
 		Content: message,
 	}
+	gc.messageChan <- msg
+
+	log.Println("created message:", msg)
 
 	return nil
 }
@@ -338,7 +342,7 @@ func (gc *Client) logFile(payload nodeDescriptor) {
 }
 
 func (gc *Client) createFile() {
-
+	// TODO: delete?
 }
 
 func (gc *Client) Shutdown() {
@@ -350,16 +354,14 @@ func (gc *Client) Run(knownAddr string) {
 	if knownAddr != "" {
 		gc.joinCluster(net.ParseIP(knownAddr))
 	}
-	//go gc.recvMessages()
+	go gc.recvMessages()
 	go gc.recvAlives()
 
 	go gc.sendMessages()
 	go gc.sendAlives()
 
 	go gc.aliveLoop()
-	//go gc.messageLoop()
-
-	//go gc.process()
+	go gc.messageLoop()
 }
 
 func (gc *Client) Nodes() []nodeDescriptor {
