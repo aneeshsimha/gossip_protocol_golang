@@ -2,14 +2,13 @@ package gossip
 
 import (
 	"encoding/gob"
-	"fmt"
 	"log"
 	"math/rand"
 	"net"
 	"os"
 	"time"
 
-	"github.com/aneeshsimha/gossip_protocol_golang/counter"
+	"coen317/gossip/counter"
 )
 
 const (
@@ -46,7 +45,6 @@ func New(maxNodes int, maxMessages int, alivePort string, messagePort string, al
 	for id < 100 {
 		id = rand.Uint64() // 0-99 are reserved
 	}
-	log.Printf("creating client with: id: %d, alivePort: %s, messagePort: %s\n", id, alivePort, messagePort)
 	return &Client{
 		id:             id,
 		self:           nodeDescriptor{},
@@ -81,7 +79,7 @@ func (gc *Client) sendMessages() {
 		select {
 		case <-messageTicker.C: // do every interval
 			//  choose a random known node descriptor
-			//randomNode := randomNeighbor(gc.nodes)
+			randomNode := randomNeighbor(gc.nodes)
 			// TODO
 
 			//  choose a random stored message
@@ -94,15 +92,11 @@ func (gc *Client) sendMessages() {
 }
 
 func (gc *Client) recvMessages() {
-	listener, err := net.Listen("tcp", ":"+gc.messagePort)
-	if err != nil {
-		log.Fatal(err)
-	}
+	listener, _ := net.Listen("tcp", gc.messagePort)
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
 			log.Println(err)
-			continue
 		}
 		go gc.handleMessage(conn)
 	}
@@ -139,14 +133,12 @@ func (gc *Client) sendAlives() {
 
 	// loop forever
 	for {
-		log.Println("top of send alive loop")
 		select {
 		case <-aliveTicker.C: // do every interval
 			gc.sendAlive() // package this into a single function because it has a defer
 		case <-gc.shutdown:
 			return
 		}
-		log.Println("bottom of send alive loop")
 	}
 }
 
@@ -155,25 +147,9 @@ func (gc *Client) sendAlive() {
 	// add own ip + current time to the copy of the node Descriptor list before sending
 
 	randomNode := randomNeighbor(gc.nodes)
-	for i := 0; i < 5; i += 1 {
-		// try to get an existing random node 5 times
-		if randomNode.Address != nil {
-			break
-		} else {
-			randomNode = randomNeighbor(gc.nodes)
-		}
-	}
-	if randomNode.Address == nil {
-		log.Println("nil node")
-		return
-	}
-	log.Println(randomNode)
-
 	conn, err := net.Dial("tcp", randomNode.Address.String()+":"+gc.alivePort)
-	log.Println("conn:", conn)
 	if err != nil {
 		log.Println(err)
-		return
 	}
 	defer conn.Close() // this is why this is its own function
 
@@ -186,7 +162,7 @@ func (gc *Client) sendAlive() {
 }
 
 func (gc *Client) recvAlives() {
-	listener, _ := net.Listen("tcp", ":"+gc.alivePort)
+	listener, _ := net.Listen("tcp", gc.alivePort)
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
@@ -207,7 +183,7 @@ func (gc *Client) handleAlive(conn net.Conn) {
 		if desc.ID == gc.id {
 			continue // don't bother adding own originating messages
 		}
-		gc.logFile(desc)
+		logFile(desc)
 		gc.aliveChan <- desc
 	}
 }
@@ -304,42 +280,41 @@ func (gc *Client) logFile(payload nodeDescriptor) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	bytes := []byte(fmt.Sprintf(
-		"ID of Origin: %s\t Node Address: %s\t Time: %v\tappended some data\n",
-		payload.ID,
-		payload.Address.String(),
-		payload.Timestamp,
-	))
-	if _, err := f.Write(bytes); err != nil {
+	if _, err := f.Write([]byte("ID of Origin: " + payload.ID + "\t Node Address: " + payload.Address + "\t Time: " + payload.Timestamp + "appended some data\n")); err != nil {
 		f.Close() // ignore error; Write error takes precedence
 		log.Fatal(err)
 	}
 	if err := f.Close(); err != nil {
 		log.Fatal(err)
 	}
+ 
 }
 
-func (gc *Client) createFile() {
+
+func (gc *Client) logMessages_recieved( msg messageDescriptor){
+
+	g, err := os.OpenFile("messages.txt", os.)
 
 }
+
 
 func (gc *Client) Shutdown() {
 	close(gc.shutdown)
 }
 
-func (gc *Client) Run(knownAddr string) {
-	// a nil addr means it's the first node, others will join
-	if knownAddr != "" {
-		gc.joinCluster(net.ParseIP(knownAddr))
-	}
-	//go gc.recvMessages()
+func (gc *Client) Run(knownAddr net.IP) {
+	gc.joinCluster(knownAddr)
+
+	defer f.Close() //should the close be here?
+
+	go gc.recvMessages()
 	go gc.recvAlives()
 
-	//go gc.sendMessages()
+	go gc.sendMessages()
 	go gc.sendAlives()
 
 	go gc.aliveLoop()
-	//go gc.messageLoop()
+	go gc.messageLoop()
 
 	//go gc.process()
 }
