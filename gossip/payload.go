@@ -20,9 +20,12 @@ func preparePayload(nodes1 []nodeDescriptor, me nodeDescriptor) KeepAlivePayload
 	//copy(newList, nodes1)
 	//newList[len(nodes1)] = me // insert as last element
 
+
 	var newList []nodeDescriptor // nil
 	for _, e := range nodes1 {
-		if e.Address != nil {
+
+		if e.Address != nil && e.ID >= 100 {
+			// 100 checks for sentinels
 			newList = append(newList, e)
 		}
 	}
