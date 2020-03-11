@@ -67,15 +67,15 @@ func main() {
 	)
 	gc.Run(*addr)
 
-	sendTime := rand.Uint64()%(*loops-3) + 1
+	sendTime := *delay
 	if *delay == 0 {
-		sendTime = *delay
+		sendTime = rand.Uint64()%(*loops-1) + 1
 	}
 	log.Printf("looping for %d seconds, sending a message at %d seconds", *loops, sendTime)
 
 	time.Sleep(time.Duration(sendTime) * time.Second)
 	//gc.Send(fmt.Sprintf("a message @ %v", sendTime))
-	msg := fmt.Sprintf("%sa colorful message @ %v%s", COLORS[rand.Int() % len(COLORS)], sendTime, CLEAR)
+	msg := fmt.Sprintf("%sa colorful message @ %v%s", COLORS[rand.Int()%len(COLORS)], sendTime, CLEAR)
 	gc.Send(msg)
 	time.Sleep(time.Duration(*loops-sendTime) * time.Second)
 
