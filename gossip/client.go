@@ -158,7 +158,7 @@ func (gc *Client) sendMessage() {
 	// choose random node
 	randomNode := randomNeighbor(gc.nodes)
 	if randomNode.Address == nil {
-		log.Println("sendMessage: nil node")
+		//log.Println("sendMessage: nil node")
 		return
 	}
 
@@ -170,7 +170,7 @@ func (gc *Client) sendMessage() {
 	}
 
 	conn, err := net.Dial("tcp", randomNode.Address.String()+":"+gc.messagePort)
-	log.Println("sendMessage: conn:", conn)
+	//log.Println("sendMessage: conn:", conn)
 	if err != nil {
 		log.Println(err)
 		return
@@ -219,7 +219,7 @@ func (gc *Client) recvMessages() {
 				log.Println(err)
 				continue
 			}
-			log.Println("got message connection from", conn.RemoteAddr())
+			//log.Println("got message connection from", conn.RemoteAddr())
 			go gc.handleMessage(conn)
 		}
 	}
@@ -262,7 +262,7 @@ func (gc *Client) handleMessage(conn net.Conn) {
 		return // don't bother adding own originating messages
 	}
 
-	log.Println("handling message:", msg.Message.Content)
+	//log.Println("handling message:", msg.Message.Content)
 	gc.messageChan <- msg.Message
 }
 

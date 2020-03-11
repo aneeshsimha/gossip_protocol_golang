@@ -52,7 +52,7 @@ func main() {
 	flag.Parse()
 
 	if *loops <= 3 {
-		fmt.Errorf("use more than 3 seconds")
+		fmt.Println("use more than 3 seconds")
 		os.Exit(1)
 	}
 
