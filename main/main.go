@@ -44,4 +44,5 @@ func main() {
 	for _, e := range gc.Messages() {
 		fmt.Println(e)
 	}
+	log.Printf("looped for %d seconds, sent own message at %d seconds", *loops, sendTime)
 }
