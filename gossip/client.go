@@ -287,7 +287,6 @@ func (gc *Client) messageLoop() {
 		case <-gc.shutdown:
 			return
 		case desc := <-gc.messageChan:
-			fmt.Println("inserting message:", desc)
 			insertMessage(gc.messages[:], desc)
 		}
 	}

@@ -162,9 +162,9 @@ func insertNode(nodes []nodeDescriptor, descriptor nodeDescriptor) bool {
 	return true
 }
 
-func insertMessage(nodes []messageDescriptor, descriptor messageDescriptor) bool {
+func insertMessage(messages []messageDescriptor, descriptor messageDescriptor) bool {
 	oldest := 0 // index of oldest node
-	for i, e := range nodes {
+	for i, e := range messages {
 		if e.ID == 0 {
 			// e is uninitialized
 			// array is not full, so just "append"
@@ -174,23 +174,24 @@ func insertMessage(nodes []messageDescriptor, descriptor messageDescriptor) bool
 		if e.collisionHash() == descriptor.collisionHash() {
 			// node is already in the table, just update e
 			if e.time().Before(descriptor.time()) {
-				nodes[i] = descriptor
+				messages[i] = descriptor
 				return true
 			}
 			return false
 		}
 
 		// else, check if the current node is older than the current old node
-		if oldNode := nodes[oldest]; oldNode.time().After(e.time()) {
+		if oldNode := messages[oldest]; oldNode.time().After(e.time()) {
 			// if current node is older than oldNode, set oldest node index to current index
 			oldest = i
 		}
 	}
-	if nodes[oldest].time().After(descriptor.time()) {
+	if messages[oldest].time().After(descriptor.time()) {
 		// descriptor is older than the oldest node
 		return false
 	}
-	nodes[oldest] = descriptor
+	//fmt.Println("inserting message:", descriptor)
+	messages[oldest] = descriptor
 	return true
 }
 
