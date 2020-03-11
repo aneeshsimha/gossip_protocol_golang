@@ -169,7 +169,7 @@ func (gc *Client) sendAlive() {
 		//log.Println("nil node")
 		return
 	}
-	log.Println(randomNode)
+	//log.Println("random node: ", randomNode)
 
 	conn, err := net.Dial("tcp", randomNode.Address.String()+":"+gc.alivePort)
 	//log.Println("conn:", conn)
