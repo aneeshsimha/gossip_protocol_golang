@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/aneeshsimha/gossip_protocol_golang/gossip"
+	"math/rand"
 	"time"
 )
 
@@ -19,11 +20,16 @@ func main() {
 		3,
 		*alivePort,
 		*msgPort,
-		1000*time.Millisecond,
-		1000*time.Millisecond,
+		200*time.Millisecond,
+		200*time.Millisecond,
 	)
 	gc.Run(*addr)
-	time.Sleep(time.Duration(*loops) * time.Second)
+
+	//time.Sleep(time.Duration(*loops) * time.Second)
+	sendTime := rand.Uint64() % (*loops - 1) + 1
+	time.Sleep(time.Duration(sendTime) * time.Second)
+	gc.Send(fmt.Sprintf("a message @ %v", sendTime))
+	time.Sleep(time.Duration(*loops - sendTime) * time.Second)
 
 	gc.Shutdown()
 	time.Sleep(time.Second)

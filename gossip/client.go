@@ -109,6 +109,7 @@ func (gc *Client) sendMessages() {
 			//  choose a random stored message
 			//  turn the messageDescriptor into a stringPacket
 			//  send the stringPacket
+			gc.sendMessage()
 		case <-gc.shutdown:
 			return
 		}
@@ -120,14 +121,6 @@ func (gc *Client) sendAlive() {
 	// add own ip + current time to the copy of the node Descriptor list before sending
 
 	randomNode := randomNeighbor(gc.nodes)
-	for i := 0; i < 5; i += 1 {
-		// try to get an existing random node 5 times
-		if randomNode.Address != nil {
-			break
-		} else {
-			randomNode = randomNeighbor(gc.nodes)
-		}
-	}
 	if randomNode.Address == nil {
 		//log.Println("nil node")
 		return
@@ -145,7 +138,7 @@ func (gc *Client) sendAlive() {
 	// make/get self node
 	me := newNodeDescriptor(nil, time.Now(), gc.id, <-gc.counter.Count) // filled in on the other end
 	//log.Printf("created self descriptor %s\n", me)
-	kap := preparePayload(gc.nodes, me)
+	kap := prepareKeepAlivePayload(gc.nodes, me)
 
 	//log.Printf("sent packet: [")
 	//for _, e := range kap.KnownNodes {
@@ -157,9 +150,45 @@ func (gc *Client) sendAlive() {
 	_ = enc.Encode(kap)
 }
 
+func (gc *Client) sendMessage() {
+	// choose random node descriptor
+	// choose random message
+	// send message
+
+	// choose random node
+	randomNode := randomNeighbor(gc.nodes)
+	if randomNode.Address == nil {
+		//log.Println("nil node")
+		return
+	}
+
+	// choose random message
+	randMessage := randomMessage(gc.messages)
+	if randMessage.Content == "" {
+		//log.Println("nil message")
+		return
+	}
+
+	conn, err := net.Dial("tcp", randomNode.Address.String()+":"+gc.alivePort)
+	//log.Println("conn:", conn)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	defer conn.Close() // this is why this is its own function
+
+	payload := newStringPayload(randMessage)
+
+	enc := gob.NewEncoder(conn)
+	_ = enc.Encode(payload)
+}
+
 func (gc *Client) recvAlives() {
-	listener, _ := net.Listen("tcp", ":"+gc.alivePort)
+	listener, err := net.Listen("tcp", ":"+gc.alivePort)
 	defer log.Println("shut down recvAlives")
+	if err != nil {
+		log.Fatal("could not listen for keep alives:", err)
+	}
 	for {
 		select {
 		case <-gc.shutdown:
@@ -176,9 +205,9 @@ func (gc *Client) recvAlives() {
 
 func (gc *Client) recvMessages() {
 	listener, err := net.Listen("tcp", ":"+gc.messagePort)
-	defer log.Println("recvMessages shut down")
+	defer log.Println("shut down recvMessages")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("could not listen for messages:", err)
 	}
 	for {
 		select {
@@ -192,7 +221,6 @@ func (gc *Client) recvMessages() {
 			}
 			go gc.handleMessage(conn)
 		}
-
 	}
 }
 
@@ -233,6 +261,7 @@ func (gc *Client) handleMessage(conn net.Conn) {
 		return // don't bother adding own originating messages
 	}
 
+	log.Println(msg.Message.Content)
 	gc.messageChan <- msg.Message
 }
 

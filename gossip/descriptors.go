@@ -193,12 +193,29 @@ func insertMessage(nodes []messageDescriptor, descriptor messageDescriptor) bool
 }
 
 // utility functions to select random node
+// tries to get a non-nil node 5x before failing
 func randomNeighbor(nodes1 []nodeDescriptor) nodeDescriptor {
-	iter := rand.Intn(len(nodes1))
-	return nodes1[iter]
+	randomNode := nodes1[rand.Intn(len(nodes1))]
+	for i := 0; i < 5; i += 1 {
+		// try to get an existing random node 5 times
+		if randomNode.Address != nil {
+			break
+		} else {
+			randomNode = nodes1[rand.Intn(len(nodes1))]
+		}
+	}
+	return randomNode
 }
 
-func randomMessage(nodes1 []messageDescriptor) messageDescriptor {
-	iter := rand.Intn(len(nodes1))
-	return nodes1[iter]
+func randomMessage(messages []messageDescriptor) messageDescriptor {
+	randomMsg := messages[rand.Intn(len(messages))]
+	for i := 0; i < 5; i += 1 {
+		// try to get an existing random node 5 times
+		if randomMsg.Content != "" {
+			break
+		} else {
+			randomMsg = messages[rand.Intn(len(messages))]
+		}
+	}
+	return randomMsg
 }

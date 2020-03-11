@@ -5,7 +5,7 @@ type KeepAlivePayload struct {
 }
 
 // utility function to make a separate list of descriptors to send to another node
-func preparePayload(nodes1 []nodeDescriptor, me nodeDescriptor) KeepAlivePayload {
+func prepareKeepAlivePayload(nodes1 []nodeDescriptor, me nodeDescriptor) KeepAlivePayload {
 	//newList := make([]nodeDescriptor, len(nodes1)+1)
 	//copy(newList, nodes1)
 	//newList[len(nodes1)] = me // insert as last element
@@ -24,4 +24,8 @@ func preparePayload(nodes1 []nodeDescriptor, me nodeDescriptor) KeepAlivePayload
 
 type StringPayload struct {
 	Message messageDescriptor
+}
+
+func newStringPayload(message messageDescriptor) StringPayload {
+	return StringPayload{message}
 }
