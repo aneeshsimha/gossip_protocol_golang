@@ -141,14 +141,14 @@ func (gc *Client) sendAlives() {
 
 	// loop forever
 	for {
-		log.Println("top of send alive loop")
+		//log.Println("top of send alive loop")
 		select {
 		case <-aliveTicker.C: // do every interval
 			gc.sendAlive() // package this into a single function because it has a defer
 		case <-gc.shutdown:
 			return
 		}
-		log.Println("bottom of send alive loop")
+		//log.Println("bottom of send alive loop")
 	}
 }
 
@@ -166,13 +166,13 @@ func (gc *Client) sendAlive() {
 		}
 	}
 	if randomNode.Address == nil {
-		log.Println("nil node")
+		//log.Println("nil node")
 		return
 	}
 	log.Println(randomNode)
 
 	conn, err := net.Dial("tcp", randomNode.Address.String()+":"+gc.alivePort)
-	log.Println("conn:", conn)
+	//log.Println("conn:", conn)
 	if err != nil {
 		log.Println(err)
 		return
@@ -180,16 +180,15 @@ func (gc *Client) sendAlive() {
 	defer conn.Close() // this is why this is its own function
 
 	// make/get self node
-	//strAddr := strings.Split(conn.LocalAddr().String(), ":")[0]
 	me := newNodeDescriptor(nil, time.Now(), gc.id, <-gc.counter.Count) // filled in on the other end
-	log.Printf("created self descriptor %s\n", me)
+	//log.Printf("created self descriptor %s\n", me)
 	kap := preparePayload(gc.nodes, me)
 
-	log.Printf("sent packet: [")
-	for _, e := range kap.KnownNodes {
-		fmt.Printf("{%s, id:%d, count:%d}", e.Address, e.ID, e.Count)
-	}
-	fmt.Printf("]\n")
+	//log.Printf("sent packet: [")
+	//for _, e := range kap.KnownNodes {
+	//	fmt.Printf("{%s, id:%d, count:%d}", e.Address, e.ID, e.Count)
+	//}
+	//fmt.Printf("]\n")
 
 	enc := gob.NewEncoder(conn)
 	_ = enc.Encode(kap)
@@ -213,21 +212,20 @@ func (gc *Client) handleAlive(conn net.Conn) {
 	kap := KeepAlivePayload{}
 	dec.Decode(&kap)
 
-	log.Printf("received alive packet with %d nodes: %v\n", len(kap.KnownNodes), kap.KnownNodes)
+	//log.Printf("received alive packet with %d nodes: %v\n", len(kap.KnownNodes), kap.KnownNodes)
 
 	for _, desc := range kap.KnownNodes {
 		if desc.ID == gc.id {
-			fmt.Println("dupe:", desc.ID, desc.Address)
+			//fmt.Println("dupe:", desc.ID, desc.Address)
 			continue // don't bother adding own originating messages
 		}
-		fmt.Println(desc.ID, desc.Address)
+		//fmt.Println(desc.ID, desc.Address)
 		if desc.Address == nil {
 			// if it's a nil address, then it's the address of the sender
 			strAddr := strings.Split(conn.RemoteAddr().String(), ":")[0]
 			desc.Address = net.ParseIP(strAddr)
-			log.Printf("received node with nil ip, changed to %v (%v)", desc.Address, strAddr)
+			//log.Printf("received node with nil ip, changed to %v (%v)", desc.Address, strAddr)
 		}
-		//log.Printf("%s\n", desc)
 		gc.logFile(desc)
 		gc.aliveChan <- desc
 	}
@@ -241,57 +239,6 @@ func (gc *Client) aliveLoop() {
 	}
 }
 
-// replaced by various things
-//func (gc *Client) mergeNode(descriptor nodeDescriptor) {
-//	// utility method
-//	// TODO
-//	insertNode(gc.nodes[:], descriptor)
-//}
-//
-//func (gc *Client) mergeMessage(message messageDescriptor) {
-//	// utility method
-//	// TODO
-//	insertMessage(gc.messages[:], message)
-//}
-//
-//func (gc *Client) process() {
-//	// process messages that have been sent down the various channels
-//	for {
-//		select {
-//		case <-gc.shutdown:
-//			return
-//		case node := <-gc.aliveChan:
-//			// merge the node in
-//
-//			gc.mergeNode(node) // TODO
-//		case message := <-gc.messageChan:
-//			// merge the message in
-//
-//			gc.mergeMessage(message) // TODO
-//		}
-//	}
-//}
-
-// replaced by sendNodes and sendMessages
-//func (gc *Client) sendLoop() {
-//	aliveTicker := time.NewTicker(gc.aliveTimeout)
-//	messageTicker := time.NewTicker(gc.messageTimeout)
-//
-//loop:
-//	for {
-//		select {
-//		case <-aliveTicker.C:
-//			// send keepalive
-//		case <-messageTicker.C:
-//			// send message
-//		case <-gc.shutdown:
-//			break loop
-//		}
-//	}
-//	aliveTicker.Stop()
-//	messageTicker.Stop()
-//	log.Println("send loop shut down")
-//}
 
 func (gc *Client) joinCluster(knownAddr net.IP) {
 	// only ever called once, when you join the network
@@ -326,7 +273,7 @@ func (gc *Client) logFile(payload nodeDescriptor) {
 		log.Fatal(err)
 	}
 	bytes := []byte(fmt.Sprintf(
-		"ID of Origin: %s\t Node Address: %s\t Time: %v\tappended some data\n",
+		"ID of Origin: %d\t Node Address: %s\t Time: %v\tappended some data\n",
 		payload.ID,
 		payload.Address.String(),
 		payload.Timestamp,
