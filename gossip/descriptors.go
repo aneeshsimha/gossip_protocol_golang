@@ -8,6 +8,7 @@ import (
 	"time"
 )
 
+// useful utility functions for descriptors
 // inherited by other xyzDescriptor types
 type Descriptor struct {
 	Timestamp time.Time
