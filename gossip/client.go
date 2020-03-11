@@ -48,7 +48,7 @@ func New(maxNodes int, maxMessages int, alivePort string, messagePort string, al
 	for id < 100 {
 		id = rand.Uint64() // 0-99 are reserved
 	}
-	log.Printf("creating client with: id: %d, alivePort: %s, messagePort: %s\n", id, alivePort, messagePort)
+	// log.Printf("creating client with: id: %d, alivePort: %s, messagePort: %s\n", id, alivePort, messagePort)
 	return &Client{
 		id:             id,
 		self:           nodeDescriptor{},
@@ -169,6 +169,7 @@ func (gc *Client) sendMessage() {
 		return
 	}
 
+	// TCP connection to the random node
 	conn, err := net.Dial("tcp", randomNode.Address.String()+":"+gc.messagePort)
 	//log.Println("sendMessage: conn:", conn)
 	if err != nil {
@@ -176,13 +177,14 @@ func (gc *Client) sendMessage() {
 		return
 	}
 	defer conn.Close() // this is why this is its own function
-
+	//create payload to send message
 	payload := newStringPayload(randMessage)
 
 	enc := gob.NewEncoder(conn)
 	_ = enc.Encode(payload)
 }
 
+// Channel used to recieve keepAlive packets, concurrency provided by spinning off a new thread each time a connection is established 
 func (gc *Client) recvAlives() {
 	listener, err := net.Listen("tcp", ":"+gc.alivePort)
 	defer log.Println("shut down recvAlives")
@@ -203,9 +205,10 @@ func (gc *Client) recvAlives() {
 	}
 }
 
+// same as recvAlive except it handles messages
 func (gc *Client) recvMessages() {
 	listener, err := net.Listen("tcp", ":"+gc.messagePort)
-	defer log.Println("shut down recvMessages")
+	// defer log.Println("shut down recvMessages")
 	if err != nil {
 		log.Fatal("could not listen for messages:", err)
 	}
@@ -225,6 +228,7 @@ func (gc *Client) recvMessages() {
 	}
 }
 
+// decodes node packet and inserts each desc into the client's partial view, only keeping the newest ones
 func (gc *Client) handleAlive(conn net.Conn) {
 	defer conn.Close()
 
@@ -251,6 +255,8 @@ func (gc *Client) handleAlive(conn net.Conn) {
 	}
 }
 
+
+//same functionality as handleAlive, except there is only one message per request
 func (gc *Client) handleMessage(conn net.Conn) {
 	defer conn.Close()
 
@@ -266,7 +272,7 @@ func (gc *Client) handleMessage(conn net.Conn) {
 	gc.messageChan <- msg.Message
 }
 
-// goroutine
+// channel that inserts a given node desc into the client's view, keeping newest descs first
 func (gc *Client) aliveLoop() {
 	defer log.Println("aliveLoop shut down")
 	for {
@@ -279,7 +285,7 @@ func (gc *Client) aliveLoop() {
 	}
 }
 
-// goroutine
+// channel inserts message into message array
 func (gc *Client) messageLoop() {
 	defer log.Println("messageLoop shut down")
 	for {
@@ -292,6 +298,7 @@ func (gc *Client) messageLoop() {
 	}
 }
 
+// Used at startup to join an existing node cluster or to start a node cluster. Needs the ip address of at least 1 running node
 func (gc *Client) joinCluster(knownAddr net.IP) {
 	// only ever called once, when you join the network
 	node := newNodeDescriptor(knownAddr, time.Now(), 1, <-gc.counter.Count)
@@ -341,9 +348,9 @@ func (gc *Client) logFile(payload nodeDescriptor) {
 	}
 }
 
-func (gc *Client) createFile() {
-	// TODO: delete?
-}
+// func (gc *Client) createFile() {
+// 	// TODO: delete?
+// }
 
 func (gc *Client) Shutdown() {
 	close(gc.shutdown)

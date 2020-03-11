@@ -3,11 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/aneeshsimha/gossip_protocol_golang/gossip"
 	"log"
 	"math/rand"
 	"os"
 	"time"
+
+	"github.com/aneeshsimha/gossip_protocol_golang/gossip"
 )
 
 const (
@@ -89,12 +90,14 @@ func main() {
 	for _, e := range gc.Nodes() {
 		fmt.Println(e)
 	}
+	log.Println("*********************")
 
 	fmt.Println()
 	log.Println("*** message list ***")
 	for _, e := range gc.Messages() {
 		fmt.Println(e)
 	}
+	log.Println("*********************")
 
 	fmt.Println()
 	log.Printf("joined at %d, looped for %d seconds, sent own message at %d seconds: %s", *join, *loops, sendTime, msg)
