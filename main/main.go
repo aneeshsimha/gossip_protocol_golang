@@ -21,8 +21,8 @@ func main() {
 		3,
 		*alivePort,
 		*msgPort,
-		200*time.Millisecond,
-		200*time.Millisecond,
+		50*time.Millisecond,
+		50*time.Millisecond,
 	)
 	gc.Run(*addr)
 
