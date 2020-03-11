@@ -80,7 +80,7 @@ func newMessageDescriptor(content string, timestamp time.Time, id uint64, count 
 func (md *messageDescriptor) collisionHash() uint64 {
 	h := fnv.New64a()
 	//h.Write([]byte(md.Content))
-	hashStr := Sprintf("(%d, %d)", md.ID, md.Count)
+	hashStr := fmt.Sprintf("(%d, %d)", md.ID, md.Count)
 	h.Write([]byte(hashStr))
 	return h.Sum64()
 }
