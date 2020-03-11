@@ -49,7 +49,8 @@ func main() {
 	alivePort := flag.String("alive", "8000", "port for keep alives")
 	msgPort := flag.String("msgPort", "8001", "port for message passing")
 	loops := flag.Uint64("loops", 10, "number of seconds to loop for")
-	delay := flag.Uint64("delay", 0, "when to send the message")
+	send := flag.Uint64("send", 0, "when to send the message")
+	join := flag.Uint64("join", 0, "when to join the cluster")
 	flag.Parse()
 
 	if *loops <= 3 {
@@ -65,10 +66,11 @@ func main() {
 		50*time.Millisecond,
 		50*time.Millisecond,
 	)
+	time.Sleep(time.Duration(*join) * time.Second)
 	gc.Run(*addr)
 
-	sendTime := *delay
-	if *delay == 0 {
+	sendTime := *send
+	if *send == 0 {
 		sendTime = rand.Uint64()%(*loops-1) + 1
 	}
 	log.Printf("looping for %d seconds, sending a message at %d seconds", *loops, sendTime)
@@ -95,5 +97,5 @@ func main() {
 	}
 
 	fmt.Println()
-	log.Printf("\nlooped for %d seconds, sent own message at %d seconds: %s", *loops, sendTime, msg)
+	log.Printf("joined at %d, looped for %d seconds, sent own message at %d seconds: %s", *join, *loops, sendTime, msg)
 }
