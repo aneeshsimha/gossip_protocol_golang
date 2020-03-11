@@ -32,10 +32,15 @@ const (
 var COLORS = []string{
 	Red,
 	Green,
-	Blue,
-	Purple,
+	Light_Blue,
+	Light_Purple,
 	Cyan,
 	Yellow,
+	White,
+	Light_Green,
+	Brown_Orange,
+	Light_Red,
+	Light_Cyan,
 }
 
 func main() {
