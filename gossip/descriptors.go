@@ -128,6 +128,11 @@ type node interface {
 //}
 
 func insertNode(nodes []nodeDescriptor, descriptor nodeDescriptor) bool {
+	if descriptor.ID < 100 {
+		// sentinel value
+		return false
+	}
+
 	oldest := 0 // index of oldest node
 	for i, e := range nodes {
 		if e.ID == 0 {
@@ -161,6 +166,11 @@ func insertNode(nodes []nodeDescriptor, descriptor nodeDescriptor) bool {
 }
 
 func insertMessage(nodes []messageDescriptor, descriptor messageDescriptor) bool {
+	if descriptor.ID < 100 {
+		// sentinel value
+		return false
+	}
+	
 	oldest := 0 // index of oldest node
 	for i, e := range nodes {
 		if e.ID == 0 {
