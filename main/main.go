@@ -26,5 +26,7 @@ func main() {
 		time.Sleep(time.Second)
 	}
 
-	fmt.Println("\n", gc.Nodes())
+	for _, e := range gc.Nodes() {
+		fmt.Println(e)
+	}
 }
