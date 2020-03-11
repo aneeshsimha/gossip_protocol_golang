@@ -54,6 +54,7 @@ func main() {
 	loops := flag.Uint64("loops", 10, "number of seconds to loop for")
 	send := flag.Uint64("send", 0, "when to send the message")
 	join := flag.Uint64("join", 0, "when to join the cluster")
+	ms := flag.Int("ms", 50, "milliseconds per message interval")
 	flag.Parse()
 
 	if *loops <= 3 {
@@ -66,8 +67,8 @@ func main() {
 		*numMessages,
 		*alivePort,
 		*msgPort,
-		50*time.Millisecond,
-		50*time.Millisecond,
+		time.Duration(*ms)*time.Millisecond,
+		time.Duration(*ms)*time.Millisecond,
 	)
 	time.Sleep(time.Duration(*join) * time.Second)
 	gc.Run(*addr)
