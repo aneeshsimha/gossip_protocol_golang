@@ -190,7 +190,7 @@ func insertMessage(messages []messageDescriptor, descriptor messageDescriptor) b
 		// descriptor is older than the oldest node
 		return false
 	}
-	//fmt.Println("inserting message:", descriptor)
+	fmt.Println("inserting message:", descriptor)
 	messages[oldest] = descriptor
 	return true
 }
