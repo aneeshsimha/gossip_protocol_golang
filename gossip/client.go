@@ -158,19 +158,19 @@ func (gc *Client) sendMessage() {
 	// choose random node
 	randomNode := randomNeighbor(gc.nodes)
 	if randomNode.Address == nil {
-		//log.Println("nil node")
+		log.Println("sendMessage: nil node")
 		return
 	}
 
 	// choose random message
 	randMessage := randomMessage(gc.messages)
 	if randMessage.Content == "" {
-		//log.Println("nil message")
+		log.Println("sendMessage: nil message")
 		return
 	}
 
 	conn, err := net.Dial("tcp", randomNode.Address.String()+":"+gc.alivePort)
-	//log.Println("conn:", conn)
+	log.Println("sendMessage: conn:", conn)
 	if err != nil {
 		log.Println(err)
 		return
