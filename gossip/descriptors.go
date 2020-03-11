@@ -58,6 +58,10 @@ type messageDescriptor struct {
 	Content string
 }
 
+func (md messageDescriptor) String() string {
+	return fmt.Sprintf("{messageDescriptor:: %s, Content: %s}", md.Descriptor, md.Content)
+}
+
 func newMessageDescriptor(content string, timestamp time.Time, id uint64, count uint64) messageDescriptor {
 	return messageDescriptor{
 		Descriptor: Descriptor{
@@ -84,10 +88,6 @@ type node interface {
 	collisionHash() uint64
 }
 
-//type nodeSet struct {
-//	nodes   []node
-//	maxSize int
-//}
 
 // TODO: wip
 //  Okay, so this doesn't work, because golang copies interface slices weirdly (linear time rather than constant)
