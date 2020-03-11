@@ -67,6 +67,26 @@ func New(maxNodes int, maxMessages int, alivePort string, messagePort string, al
 	}
 }
 
+func (gc *Client) sendAlives() {
+	// select a random node Descriptor and send keepalive
+
+	aliveTicker := time.NewTicker(gc.aliveTimeout)
+	defer aliveTicker.Stop()
+	defer log.Println("sendAlives loop shut down")
+
+	// loop forever
+	for {
+		//log.Println("top of send alive loop")
+		select {
+		case <-aliveTicker.C: // do every interval
+			gc.sendAlive() // package this into a single function because it has a defer
+		case <-gc.shutdown:
+			return
+		}
+		//log.Println("bottom of send alive loop")
+	}
+}
+
 func (gc *Client) sendMessages() {
 	// 1. select a random message and node Descriptor
 	// 2. send message to node, and request a message from node
@@ -92,75 +112,6 @@ func (gc *Client) sendMessages() {
 		case <-gc.shutdown:
 			return
 		}
-	}
-}
-
-func (gc *Client) recvMessages() {
-	listener, err := net.Listen("tcp", ":"+gc.messagePort)
-	defer log.Println("recvMessages shut down")
-	if err != nil {
-		log.Fatal(err)
-	}
-	for {
-		select {
-		case <- gc.shutdown:
-			return
-		default:
-			conn, err := listener.Accept()
-			if err != nil {
-				log.Println(err)
-				continue
-			}
-			go gc.handleMessage(conn)
-		}
-
-	}
-}
-
-func (gc *Client) handleMessage(conn net.Conn) {
-	defer conn.Close()
-
-	dec := gob.NewDecoder(conn)
-	msg := StringPayload{}
-	dec.Decode(&msg)
-
-	if msg.Message.ID == gc.id {
-		return // don't bother adding own originating messages
-	}
-
-	gc.messageChan <- msg.Message
-}
-
-// goroutine
-func (gc *Client) messageLoop() {
-	defer log.Println("messageLoop shut down")
-	for {
-		select {
-		case <- gc.shutdown:
-			return
-		case desc := <- gc.messageChan:
-			insertMessage(gc.messages[:], desc)
-		}
-	}
-}
-
-func (gc *Client) sendAlives() {
-	// select a random node Descriptor and send keepalive
-
-	aliveTicker := time.NewTicker(gc.aliveTimeout)
-	defer aliveTicker.Stop()
-	defer log.Println("sendAlives loop shut down")
-
-	// loop forever
-	for {
-		//log.Println("top of send alive loop")
-		select {
-		case <-aliveTicker.C: // do every interval
-			gc.sendAlive() // package this into a single function because it has a defer
-		case <-gc.shutdown:
-			return
-		}
-		//log.Println("bottom of send alive loop")
 	}
 }
 
@@ -211,7 +162,7 @@ func (gc *Client) recvAlives() {
 	defer log.Println("shut down recvAlives")
 	for {
 		select {
-		case <- gc.shutdown:
+		case <-gc.shutdown:
 			return
 		default:
 			conn, err := listener.Accept()
@@ -220,6 +171,28 @@ func (gc *Client) recvAlives() {
 			}
 			go gc.handleAlive(conn)
 		}
+	}
+}
+
+func (gc *Client) recvMessages() {
+	listener, err := net.Listen("tcp", ":"+gc.messagePort)
+	defer log.Println("recvMessages shut down")
+	if err != nil {
+		log.Fatal(err)
+	}
+	for {
+		select {
+		case <-gc.shutdown:
+			return
+		default:
+			conn, err := listener.Accept()
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+			go gc.handleMessage(conn)
+		}
+
 	}
 }
 
@@ -249,12 +222,26 @@ func (gc *Client) handleAlive(conn net.Conn) {
 	}
 }
 
+func (gc *Client) handleMessage(conn net.Conn) {
+	defer conn.Close()
+
+	dec := gob.NewDecoder(conn)
+	msg := StringPayload{}
+	dec.Decode(&msg)
+
+	if msg.Message.ID == gc.id {
+		return // don't bother adding own originating messages
+	}
+
+	gc.messageChan <- msg.Message
+}
+
 // goroutine
 func (gc *Client) aliveLoop() {
 	defer log.Println("aliveLoop shut down")
 	for {
 		select {
-		case <- gc.shutdown:
+		case <-gc.shutdown:
 			return
 		case desc := <-gc.aliveChan:
 			insertNode(gc.nodes[:], desc)
@@ -262,11 +249,22 @@ func (gc *Client) aliveLoop() {
 	}
 }
 
+// goroutine
+func (gc *Client) messageLoop() {
+	defer log.Println("messageLoop shut down")
+	for {
+		select {
+		case <-gc.shutdown:
+			return
+		case desc := <-gc.messageChan:
+			insertMessage(gc.messages[:], desc)
+		}
+	}
+}
 
 func (gc *Client) joinCluster(knownAddr net.IP) {
 	// only ever called once, when you join the network
 	node := newNodeDescriptor(knownAddr, time.Now(), 1, <-gc.counter.Count)
-	//TODO: Save node? im not sure why knowaddr is used I thought we make a node of ourselves here and send it to knownAddr
 	insertNode(gc.nodes[:], node)
 
 }
@@ -326,7 +324,7 @@ func (gc *Client) Run(knownAddr string) {
 	//go gc.recvMessages()
 	go gc.recvAlives()
 
-	//go gc.sendMessages()
+	go gc.sendMessages()
 	go gc.sendAlives()
 
 	go gc.aliveLoop()
