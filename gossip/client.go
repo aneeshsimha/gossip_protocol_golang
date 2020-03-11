@@ -76,7 +76,7 @@ func (gc *Client) sendMessages() {
 
 	messageTicker := time.NewTicker(gc.messageTimeout)
 	defer messageTicker.Stop()
-	defer log.Println("send loop shut down")
+	defer log.Println("sendMessages loop shut down")
 
 	// loop forever
 	for {
@@ -97,16 +97,23 @@ func (gc *Client) sendMessages() {
 
 func (gc *Client) recvMessages() {
 	listener, err := net.Listen("tcp", ":"+gc.messagePort)
+	defer fmt.Println("recvMessages shut down")
 	if err != nil {
 		log.Fatal(err)
 	}
 	for {
-		conn, err := listener.Accept()
-		if err != nil {
-			log.Println(err)
-			continue
+		select {
+		case <- gc.shutdown:
+			return
+		default:
+			conn, err := listener.Accept()
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+			go gc.handleMessage(conn)
 		}
-		go gc.handleMessage(conn)
+
 	}
 }
 
@@ -126,9 +133,15 @@ func (gc *Client) handleMessage(conn net.Conn) {
 
 // goroutine
 func (gc *Client) messageLoop() {
+	defer fmt.Println("messageLoop shut down")
 	for {
-		desc := <-gc.messageChan
-		insertMessage(gc.messages[:], desc)
+		select {
+		case <- gc.shutdown:
+			return
+		default:
+			desc := <-gc.messageChan
+			insertMessage(gc.messages[:], desc)
+		}
 	}
 }
 
@@ -137,7 +150,7 @@ func (gc *Client) sendAlives() {
 
 	aliveTicker := time.NewTicker(gc.aliveTimeout)
 	defer aliveTicker.Stop()
-	defer log.Println("send loop shut down")
+	defer log.Println("sendAlives loop shut down")
 
 	// loop forever
 	for {
@@ -196,12 +209,18 @@ func (gc *Client) sendAlive() {
 
 func (gc *Client) recvAlives() {
 	listener, _ := net.Listen("tcp", ":"+gc.alivePort)
+	defer fmt.Println("shut down recvAlives")
 	for {
-		conn, err := listener.Accept()
-		if err != nil {
-			log.Println(err)
+		select {
+		case <- gc.shutdown:
+			return
+		default:
+			conn, err := listener.Accept()
+			if err != nil {
+				log.Println(err)
+			}
+			go gc.handleAlive(conn)
 		}
-		go gc.handleAlive(conn)
 	}
 }
 
@@ -233,9 +252,15 @@ func (gc *Client) handleAlive(conn net.Conn) {
 
 // goroutine
 func (gc *Client) aliveLoop() {
+	defer fmt.Println("aliveLoop shut down")
 	for {
-		desc := <-gc.aliveChan
-		insertNode(gc.nodes[:], desc)
+		select {
+		case <- gc.shutdown:
+			return
+		default:
+			desc := <-gc.aliveChan
+			insertNode(gc.nodes[:], desc)
+		}
 	}
 }
 

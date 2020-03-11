@@ -22,9 +22,10 @@ func main() {
 		1000*time.Millisecond,
 	)
 	gc.Run(*addr)
-	for i := 0; i < 10; i++ {
-		time.Sleep(time.Second)
-	}
+	time.Sleep(10 * time.Second)
+
+	gc.Shutdown()
+	time.Sleep(time.Second)
 
 	for _, e := range gc.Nodes() {
 		fmt.Println(e)
