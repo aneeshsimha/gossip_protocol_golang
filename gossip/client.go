@@ -366,5 +366,9 @@ func (gc *Client) Nodes() []nodeDescriptor {
 	return gc.nodes
 }
 
+func (gc *Client) Messages() []messageDescriptor {
+	return gc.messages
+}
+
 // TODO:
 //  - Make select random node/message thread-safe
