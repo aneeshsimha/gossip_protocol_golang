@@ -165,7 +165,7 @@ func (gc *Client) sendMessage() {
 	// choose random message
 	randMessage := randomMessage(gc.messages)
 	if randMessage.Content == "" {
-		log.Println("sendMessage: nil message")
+		//log.Println("sendMessage: nil message")
 		return
 	}
 
