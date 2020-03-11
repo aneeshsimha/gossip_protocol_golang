@@ -44,14 +44,20 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+		defer conn.Close()
 		enc := gob.NewEncoder(conn)
 		_ = enc.Encode(f) // look we're not programming well here
+		fmt.Println("remote:", conn.RemoteAddr())
+		fmt.Println("local: ", conn.LocalAddr())
 	} else {
 		listener, _ := net.Listen("tcp", ":"+*port)
 		conn, _ := listener.Accept()
+		defer conn.Close()
 		dec := gob.NewDecoder(conn)
 		f2 := new(foo)
 		_ = dec.Decode(&f2)
 		fmt.Println(f2)
+		fmt.Println("remote:", conn.RemoteAddr())
+		fmt.Println("local: ", conn.LocalAddr())
 	}
 }

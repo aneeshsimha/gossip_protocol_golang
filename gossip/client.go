@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"net"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/aneeshsimha/gossip_protocol_golang/counter"
@@ -42,6 +43,7 @@ type Client struct {
 
 // constructor
 func New(maxNodes int, maxMessages int, alivePort string, messagePort string, aliveTimeout time.Duration, messageTimeout time.Duration) *Client {
+	rand.Seed(time.Now().UnixNano())
 	id := rand.Uint64()
 	for id < 100 {
 		id = rand.Uint64() // 0-99 are reserved
@@ -65,6 +67,26 @@ func New(maxNodes int, maxMessages int, alivePort string, messagePort string, al
 	}
 }
 
+func (gc *Client) sendAlives() {
+	// select a random node Descriptor and send keepalive
+
+	aliveTicker := time.NewTicker(gc.aliveTimeout)
+	defer aliveTicker.Stop()
+	defer log.Println("sendAlives loop shut down")
+
+	// loop forever
+	for {
+		//log.Println("top of send alive loop")
+		select {
+		case <-aliveTicker.C: // do every interval
+			gc.sendAlive() // package this into a single function because it has a defer
+		case <-gc.shutdown:
+			return
+		}
+		//log.Println("bottom of send alive loop")
+	}
+}
+
 func (gc *Client) sendMessages() {
 	// 1. select a random message and node Descriptor
 	// 2. send message to node, and request a message from node
@@ -74,7 +96,7 @@ func (gc *Client) sendMessages() {
 
 	messageTicker := time.NewTicker(gc.messageTimeout)
 	defer messageTicker.Stop()
-	defer log.Println("send loop shut down")
+	defer log.Println("sendMessages loop shut down")
 
 	// loop forever
 	for {
@@ -87,24 +109,145 @@ func (gc *Client) sendMessages() {
 			//  choose a random stored message
 			//  turn the messageDescriptor into a stringPacket
 			//  send the stringPacket
+			gc.sendMessage()
 		case <-gc.shutdown:
 			return
 		}
 	}
 }
 
-func (gc *Client) recvMessages() {
-	listener, err := net.Listen("tcp", ":"+gc.messagePort)
+func (gc *Client) sendAlive() {
+	// choose a random known node descriptor
+	// add own ip + current time to the copy of the node Descriptor list before sending
+
+	randomNode := randomNeighbor(gc.nodes)
+	if randomNode.Address == nil {
+		//log.Println("nil node")
+		return
+	}
+	//log.Println("random node: ", randomNode)
+
+	conn, err := net.Dial("tcp", randomNode.Address.String()+":"+gc.alivePort)
+	//log.Println("conn:", conn)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return
+	}
+	defer conn.Close() // this is why this is its own function
+
+	// make/get self node
+	me := newNodeDescriptor(nil, time.Now(), gc.id, <-gc.counter.Count) // filled in on the other end
+	//log.Printf("created self descriptor %s\n", me)
+	kap := prepareKeepAlivePayload(gc.nodes, me)
+
+	//log.Printf("sent packet: [")
+	//for _, e := range kap.KnownNodes {
+	//	fmt.Printf("{%s, id:%d, count:%d}", e.Address, e.ID, e.Count)
+	//}
+	//fmt.Printf("]\n")
+
+	enc := gob.NewEncoder(conn)
+	_ = enc.Encode(kap)
+}
+
+func (gc *Client) sendMessage() {
+	// choose random node descriptor
+	// choose random message
+	// send message
+
+	// choose random node
+	randomNode := randomNeighbor(gc.nodes)
+	if randomNode.Address == nil {
+		//log.Println("sendMessage: nil node")
+		return
+	}
+
+	// choose random message
+	randMessage := randomMessage(gc.messages)
+	if randMessage.Content == "" {
+		//log.Println("sendMessage: nil message")
+		return
+	}
+
+	conn, err := net.Dial("tcp", randomNode.Address.String()+":"+gc.messagePort)
+	//log.Println("sendMessage: conn:", conn)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	defer conn.Close() // this is why this is its own function
+
+	payload := newStringPayload(randMessage)
+
+	enc := gob.NewEncoder(conn)
+	_ = enc.Encode(payload)
+}
+
+func (gc *Client) recvAlives() {
+	listener, err := net.Listen("tcp", ":"+gc.alivePort)
+	defer log.Println("shut down recvAlives")
+	if err != nil {
+		log.Fatal("could not listen for keep alives:", err)
 	}
 	for {
-		conn, err := listener.Accept()
-		if err != nil {
-			log.Println(err)
-			continue
+		select {
+		case <-gc.shutdown:
+			return
+		default:
+			conn, err := listener.Accept()
+			if err != nil {
+				log.Println(err)
+			}
+			go gc.handleAlive(conn)
 		}
-		go gc.handleMessage(conn)
+	}
+}
+
+func (gc *Client) recvMessages() {
+	listener, err := net.Listen("tcp", ":"+gc.messagePort)
+	defer log.Println("shut down recvMessages")
+	if err != nil {
+		log.Fatal("could not listen for messages:", err)
+	}
+	for {
+		select {
+		case <-gc.shutdown:
+			return
+		default:
+			conn, err := listener.Accept()
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+			//log.Println("got message connection from", conn.RemoteAddr())
+			go gc.handleMessage(conn)
+		}
+	}
+}
+
+func (gc *Client) handleAlive(conn net.Conn) {
+	defer conn.Close()
+
+	dec := gob.NewDecoder(conn)
+	kap := KeepAlivePayload{}
+	dec.Decode(&kap)
+
+	//log.Printf("received alive packet with %d nodes: %v\n", len(kap.KnownNodes), kap.KnownNodes)
+
+	for _, desc := range kap.KnownNodes {
+		if desc.ID == gc.id {
+			//fmt.Println("dupe:", desc.ID, desc.Address)
+			continue // don't bother adding own originating messages
+		}
+		//fmt.Println(desc.ID, desc.Address)
+		if desc.Address == nil {
+			// if it's a nil address, then it's the address of the sender
+			strAddr := strings.Split(conn.RemoteAddr().String(), ":")[0]
+			desc.Address = net.ParseIP(strAddr)
+			//log.Printf("received node with nil ip, changed to %v (%v)", desc.Address, strAddr)
+		}
+		gc.logFile(desc)
+		gc.aliveChan <- desc
 	}
 }
 
@@ -119,163 +262,39 @@ func (gc *Client) handleMessage(conn net.Conn) {
 		return // don't bother adding own originating messages
 	}
 
+	//log.Println("handling message:", msg.Message.Content)
 	gc.messageChan <- msg.Message
 }
 
 // goroutine
-func (gc *Client) messageLoop() {
+func (gc *Client) aliveLoop() {
+	defer log.Println("aliveLoop shut down")
 	for {
-		desc := <-gc.messageChan
-		insertMessage(gc.messages[:], desc)
-	}
-}
-
-func (gc *Client) sendAlives() {
-	// select a random node Descriptor and send keepalive
-
-	aliveTicker := time.NewTicker(gc.aliveTimeout)
-	defer aliveTicker.Stop()
-	defer log.Println("send loop shut down")
-
-	// loop forever
-	for {
-		log.Println("top of send alive loop")
 		select {
-		case <-aliveTicker.C: // do every interval
-			gc.sendAlive() // package this into a single function because it has a defer
 		case <-gc.shutdown:
 			return
+		case desc := <-gc.aliveChan:
+			insertNode(gc.nodes[:], desc)
 		}
-		log.Println("bottom of send alive loop")
-	}
-}
-
-func (gc *Client) sendAlive() {
-	// choose a random known node descriptor
-	// add own ip + current time to the copy of the node Descriptor list before sending
-
-	randomNode := randomNeighbor(gc.nodes)
-	for i := 0; i < 5; i += 1 {
-		// try to get an existing random node 5 times
-		if randomNode.Address != nil {
-			break
-		} else {
-			randomNode = randomNeighbor(gc.nodes)
-		}
-	}
-	if randomNode.Address == nil {
-		log.Println("nil node")
-		return
-	}
-	log.Println(randomNode)
-
-	conn, err := net.Dial("tcp", randomNode.Address.String()+":"+gc.alivePort)
-	log.Println("conn:", conn)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	defer conn.Close() // this is why this is its own function
-
-	// make/get self node
-	me := newNodeDescriptor(net.ParseIP(conn.LocalAddr().String()), time.Now(), gc.id, <-gc.counter.Count)
-	kap := preparePayload(gc.nodes, me)
-
-	enc := gob.NewEncoder(conn)
-	_ = enc.Encode(kap)
-}
-
-func (gc *Client) recvAlives() {
-	listener, _ := net.Listen("tcp", ":"+gc.alivePort)
-	for {
-		conn, err := listener.Accept()
-		if err != nil {
-			log.Println(err)
-		}
-		go gc.handleAlive(conn)
-	}
-}
-
-func (gc *Client) handleAlive(conn net.Conn) {
-	defer conn.Close()
-
-	dec := gob.NewDecoder(conn)
-	kap := KeepAlivePayload{}
-	dec.Decode(&kap)
-
-	for _, desc := range kap.KnownNodes {
-		if desc.ID == gc.id {
-			continue // don't bother adding own originating messages
-		}
-		gc.logFile(desc)
-		gc.aliveChan <- desc
 	}
 }
 
 // goroutine
-func (gc *Client) aliveLoop() {
+func (gc *Client) messageLoop() {
+	defer log.Println("messageLoop shut down")
 	for {
-		desc := <-gc.aliveChan
-		insertNode(gc.nodes[:], desc)
+		select {
+		case <-gc.shutdown:
+			return
+		case desc := <-gc.messageChan:
+			insertMessage(gc.messages[:], desc)
+		}
 	}
 }
-
-// replaced by various things
-//func (gc *Client) mergeNode(descriptor nodeDescriptor) {
-//	// utility method
-//	// TODO
-//	insertNode(gc.nodes[:], descriptor)
-//}
-//
-//func (gc *Client) mergeMessage(message messageDescriptor) {
-//	// utility method
-//	// TODO
-//	insertMessage(gc.messages[:], message)
-//}
-//
-//func (gc *Client) process() {
-//	// process messages that have been sent down the various channels
-//	for {
-//		select {
-//		case <-gc.shutdown:
-//			return
-//		case node := <-gc.aliveChan:
-//			// merge the node in
-//
-//			gc.mergeNode(node) // TODO
-//		case message := <-gc.messageChan:
-//			// merge the message in
-//
-//			gc.mergeMessage(message) // TODO
-//		}
-//	}
-//}
-
-// replaced by sendNodes and sendMessages
-//func (gc *Client) sendLoop() {
-//	aliveTicker := time.NewTicker(gc.aliveTimeout)
-//	messageTicker := time.NewTicker(gc.messageTimeout)
-//
-//loop:
-//	for {
-//		select {
-//		case <-aliveTicker.C:
-//			// send keepalive
-//		case <-messageTicker.C:
-//			// send message
-//		case <-gc.shutdown:
-//			break loop
-//		}
-//	}
-//	aliveTicker.Stop()
-//	messageTicker.Stop()
-//	log.Println("send loop shut down")
-//}
 
 func (gc *Client) joinCluster(knownAddr net.IP) {
 	// only ever called once, when you join the network
 	node := newNodeDescriptor(knownAddr, time.Now(), 1, <-gc.counter.Count)
-	//TODO: Save node? im not sure why knowaddr is used I thought we make a node of ourselves here and send it to knownAddr
 	insertNode(gc.nodes[:], node)
 
 }
@@ -284,7 +303,7 @@ func (gc *Client) joinCluster(knownAddr net.IP) {
 
 func (gc *Client) Send(message string) error {
 	// send a new message to the network
-	gc.messageChan <- messageDescriptor{
+	msg := messageDescriptor{
 		Descriptor: Descriptor{
 			Count:     <-gc.counter.Count,
 			ID:        gc.id,
@@ -292,6 +311,9 @@ func (gc *Client) Send(message string) error {
 		},
 		Content: message,
 	}
+	gc.messageChan <- msg
+
+	log.Println("created message:", msg)
 
 	return nil
 }
@@ -305,7 +327,7 @@ func (gc *Client) logFile(payload nodeDescriptor) {
 		log.Fatal(err)
 	}
 	bytes := []byte(fmt.Sprintf(
-		"ID of Origin: %s\t Node Address: %s\t Time: %v\tappended some data\n",
+		"ID of Origin: %d\t Node Address: %s\t Time: %v\tappended some data\n",
 		payload.ID,
 		payload.Address.String(),
 		payload.Timestamp,
@@ -320,7 +342,7 @@ func (gc *Client) logFile(payload nodeDescriptor) {
 }
 
 func (gc *Client) createFile() {
-
+	// TODO: delete?
 }
 
 func (gc *Client) Shutdown() {
@@ -332,16 +354,22 @@ func (gc *Client) Run(knownAddr string) {
 	if knownAddr != "" {
 		gc.joinCluster(net.ParseIP(knownAddr))
 	}
-	//go gc.recvMessages()
+	go gc.recvMessages()
 	go gc.recvAlives()
 
-	//go gc.sendMessages()
+	go gc.sendMessages()
 	go gc.sendAlives()
 
 	go gc.aliveLoop()
-	//go gc.messageLoop()
+	go gc.messageLoop()
+}
 
-	//go gc.process()
+func (gc *Client) Nodes() []nodeDescriptor {
+	return gc.nodes
+}
+
+func (gc *Client) Messages() []messageDescriptor {
+	return gc.messages
 }
 
 // TODO:
