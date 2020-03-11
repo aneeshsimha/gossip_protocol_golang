@@ -97,7 +97,7 @@ func (gc *Client) sendMessages() {
 
 func (gc *Client) recvMessages() {
 	listener, err := net.Listen("tcp", ":"+gc.messagePort)
-	defer fmt.Println("recvMessages shut down")
+	defer log.Println("recvMessages shut down")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -133,13 +133,12 @@ func (gc *Client) handleMessage(conn net.Conn) {
 
 // goroutine
 func (gc *Client) messageLoop() {
-	defer fmt.Println("messageLoop shut down")
+	defer log.Println("messageLoop shut down")
 	for {
 		select {
 		case <- gc.shutdown:
 			return
-		default:
-			desc := <-gc.messageChan
+		case desc := <- gc.messageChan:
 			insertMessage(gc.messages[:], desc)
 		}
 	}
@@ -209,7 +208,7 @@ func (gc *Client) sendAlive() {
 
 func (gc *Client) recvAlives() {
 	listener, _ := net.Listen("tcp", ":"+gc.alivePort)
-	defer fmt.Println("shut down recvAlives")
+	defer log.Println("shut down recvAlives")
 	for {
 		select {
 		case <- gc.shutdown:
@@ -252,13 +251,12 @@ func (gc *Client) handleAlive(conn net.Conn) {
 
 // goroutine
 func (gc *Client) aliveLoop() {
-	defer fmt.Println("aliveLoop shut down")
+	defer log.Println("aliveLoop shut down")
 	for {
 		select {
 		case <- gc.shutdown:
 			return
-		default:
-			desc := <-gc.aliveChan
+		case desc := <-gc.aliveChan:
 			insertNode(gc.nodes[:], desc)
 		}
 	}

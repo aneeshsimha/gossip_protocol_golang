@@ -11,6 +11,7 @@ func main() {
 	addr := flag.String("addr", "", "the known address of a node to join the network through")
 	alivePort := flag.String("alive", "8000", "port for keep alives")
 	msgPort := flag.String("msgPort", "8001", "port for message passing")
+	loops := flag.Uint64("loops", 10, "number of seconds to loop for")
 	flag.Parse()
 
 	gc := gossip.New(
@@ -22,7 +23,7 @@ func main() {
 		1000*time.Millisecond,
 	)
 	gc.Run(*addr)
-	time.Sleep(10 * time.Second)
+	time.Sleep(time.Duration(*loops) * time.Second)
 
 	gc.Shutdown()
 	time.Sleep(time.Second)
