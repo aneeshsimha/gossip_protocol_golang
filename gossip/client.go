@@ -169,7 +169,7 @@ func (gc *Client) sendMessage() {
 		return
 	}
 
-	conn, err := net.Dial("tcp", randomNode.Address.String()+":"+gc.alivePort)
+	conn, err := net.Dial("tcp", randomNode.Address.String()+":"+gc.messagePort)
 	log.Println("sendMessage: conn:", conn)
 	if err != nil {
 		log.Println(err)
