@@ -6,10 +6,6 @@ type KeepAlivePayload struct {
 
 // utility function to make a separate list of descriptors to send to another node
 func prepareKeepAlivePayload(nodes1 []nodeDescriptor, me nodeDescriptor) KeepAlivePayload {
-	//newList := make([]nodeDescriptor, len(nodes1)+1)
-	//copy(newList, nodes1)
-	//newList[len(nodes1)] = me // insert as last element
-
 	var newList []nodeDescriptor // nil
 	for _, e := range nodes1 {
 		if e.Address != nil && e.ID >= 100 {
