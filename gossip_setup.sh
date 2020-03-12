@@ -37,11 +37,8 @@ fi
 mkdir -p "${workspace}/bin"
 mkdir -p "${workspace}/src/github.com/aneeshsimha/"
 
-# golang is now installed and set up, let's move onto the next step
-# TODO
 
-#cd "${workspace}/src"
-#git clone
+# golang is now installed and set up, let's move onto the next step
 
 cd "${workspace}/src/github.com/aneeshsimha/" || exit
 git clone "https://github.com/aneeshsimha/gossip_protocol_golang.git"

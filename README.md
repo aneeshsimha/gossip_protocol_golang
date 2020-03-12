@@ -13,24 +13,4 @@ Basically just
 6. Once it's booted up, `ssh -i "/path/to/keyfile" ubuntu@ec2-a-bunch-of-numbers.us-west-1.compute.amazonaws.com`
 7. Add a new security group that has a bunch of ports exposed to actually run on (we use 8000-8100)
 8. Run `gossip_setup.sh && source ~/.profile` 
-
-Meeting notes 2-29 [updated 3-09]:
----
-
-### TODOs:
-**Assigned:**
-~~- Aneesh: Joining process~~
-- Erik: TCP connection stuff / goroutines
-- Ryan: Finish algorithm design / functions
-
-**All items:**
-- TCP connection stuff / goroutines
-~~- Joining process~~
-- Finish algorithm design / functions
-- Testing environments (unit tests?)
-~~- Deployment~~
-- Demo / visualization
-- Presentation
-- Final report
-
----
+9. **NOTE:** It's very important to have the source code in `$GOPATH/src/github.com/aneeshsimha/gossip_protocol_golang`, otherwise it will not compile.
