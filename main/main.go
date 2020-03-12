@@ -80,7 +80,6 @@ func main() {
 	log.Printf("looping for %d seconds, sending a message at %d seconds", *loops, sendTime)
 
 	time.Sleep(time.Duration(sendTime) * time.Second)
-	//gc.Send(fmt.Sprintf("a message @ %v", sendTime))
 	msg := fmt.Sprintf("%sa colorful message @ %v%s", COLORS[rand.Int()%len(COLORS)], sendTime, CLEAR)
 	gc.Send(msg)
 	time.Sleep(time.Duration(*loops-sendTime) * time.Second)
