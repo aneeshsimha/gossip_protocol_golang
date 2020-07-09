@@ -2,6 +2,10 @@
 
 ---
 
+The implementation we used is based on the paper by Alberto Montresor, which can be found [here](http://disi.unitn.it/~montreso/ds/papers/montresor17.pdf).
+
+---
+
 ### AWS Setup notes:
 
 Basically just
